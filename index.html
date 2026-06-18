@@ -74,28 +74,27 @@
     }
 
     .floating-timer{
-      position:fixed;
-      right:120px;
-      top:92px;
-      width:285px;
-      min-height:285px;
-      z-index:50;
-      background:rgba(15,23,42,.94);
-      border:1px solid rgba(56,189,248,.35);
-      border-radius:24px;
-      box-shadow:0 18px 42px rgba(0,0,0,.45);
-      backdrop-filter: blur(10px);
-      padding:16px;
-      display:grid;
-      gap:12px;
-      align-content:start;
-    }
-    
-    
- .floating-clock{
   position:fixed;
-  right:120px;
-  top:570px;
+  right:85px;
+  top:150px;
+  width:285px;
+  min-height:285px;
+  z-index:50;
+  background:rgba(15,23,42,.94);
+  border:1px solid rgba(56,189,248,.35);
+  border-radius:24px;
+  box-shadow:0 18px 42px rgba(0,0,0,.45);
+  backdrop-filter: blur(10px);
+  padding:16px;
+  display:grid;
+  gap:12px;
+  align-content:start;
+}
+
+.floating-clock{
+  position:fixed;
+  right:85px;
+  top:560px;
   width:285px;
   z-index:51;
   background:rgba(15,23,42,.94);
@@ -107,6 +106,34 @@
   display:grid;
   gap:8px;
   text-align:center;
+}
+
+.floating-toggle{
+  position:fixed;
+  right:85px;
+  top:105px;
+  width:38px;
+  height:38px;
+  border-radius:50%;
+  border:1px solid rgba(56,189,248,.45);
+  background:rgba(15,23,42,.96);
+  color:#f8fafc;
+  font-size:22px;
+  font-weight:900;
+  line-height:1;
+  cursor:pointer;
+  z-index:80;
+  box-shadow:0 10px 24px rgba(0,0,0,.4);
+}
+
+.floating-toggle:hover{
+  border-color:#22c55e;
+  transform:translateY(-1px);
+}
+
+.float-hidden .floating-timer,
+.float-hidden .floating-clock{
+  display:none;
 }
 
 .real-clock-label{
@@ -450,23 +477,82 @@
     }
 
     @media(max-width:720px){
-      body{padding:12px;}
-      table{font-size:.86rem;}
-      thead th:nth-child(3),
-      tbody td:nth-child(3),
-      thead th:nth-child(5),
-      tbody td:nth-child(5){display:none;}
-      header h1{font-size:1.05rem;}
-      .section-title{align-items:flex-start; flex-direction:column;}
+  body{
+    padding:12px;
+    padding-bottom:430px;
+  }
 
-      .timer-controls{
-        grid-template-columns:1fr 1fr;
-      }
+  .floating-timer{
+    position:fixed;
+    left:12px;
+    right:12px;
+    bottom:118px;
+    top:auto;
+    width:auto;
+    min-height:auto;
+    max-height:285px;
+    overflow:auto;
+    border-radius:20px;
+    z-index:60;
+  }
 
-      .timer-btn.full{
-        grid-column:1 / -1;
-      }
-    }
+  .floating-clock{
+    position:fixed;
+    left:12px;
+    right:12px;
+    bottom:12px;
+    top:auto;
+    width:auto;
+    border-radius:20px;
+    z-index:61;
+  }
+
+  .floating-toggle{
+    position:fixed;
+    right:18px;
+    bottom:405px;
+    top:auto;
+    width:42px;
+    height:42px;
+    z-index:90;
+  }
+
+  .float-hidden{
+    padding-bottom:12px;
+  }
+
+  .float-hidden .floating-toggle{
+    bottom:18px;
+  }
+
+  table{
+    font-size:.86rem;
+  }
+
+  thead th:nth-child(3),
+  tbody td:nth-child(3),
+  thead th:nth-child(5),
+  tbody td:nth-child(5){
+    display:none;
+  }
+
+  header h1{
+    font-size:1.05rem;
+  }
+
+  .section-title{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  .timer-controls{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .timer-btn.full{
+    grid-column:1 / -1;
+  }
+}
   </style>
 </head>
 <body>
@@ -475,7 +561,7 @@
   <div class="real-clock-label">🕒 Hora actual</div>
   <div class="real-clock-time" id="realClock">00:00:00</div>
 </aside>
-
+  <button class="floating-toggle" id="floatingToggle" type="button">×</button>
   <aside class="floating-timer" id="floatingTimer">
    
     <div class="timer-head">
@@ -1159,10 +1245,33 @@
       }
     });
   });
+function setupFloatingToggle(){
+  const btn = document.getElementById("floatingToggle");
+  if(!btn) return;
 
+  const saved = localStorage.getItem("floating_tools_hidden");
+
+  if(saved === "true"){
+    document.body.classList.add("float-hidden");
+    btn.textContent = "⏱";
+  }
+
+  btn.addEventListener("click", ()=>{
+    const hidden = document.body.classList.toggle("float-hidden");
+
+    btn.textContent = hidden ? "⏱" : "×";
+
+    localStorage.setItem("floating_tools_hidden", hidden ? "true" : "false");
+  });
+}
 setTodayDate();
 updateRealClock();
 setInterval(updateRealClock, 1000);
+
+setupFloatingToggle();
+
+enableBlockTitleEditing();
+loadBlockTitles();
 
 getRows().forEach(activarFila);
 updateTimes();
