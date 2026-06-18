@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Rutina 7:00 AM a 11:30 AM</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:#121a2b;
+      --card-2:#0f172a;
+      --text:#e5e7eb;
+      --muted:#aab2c5;
+      --accent:#22c55e;
+      --accent-2:#38bdf8;
+      --warn:#f59e0b;
+      --line:#22304a;
+      --radius:16px;
+    }
+
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Noto Sans", sans-serif;
+      background: radial-gradient(1200px 800px at 20% -10%, #172554 0%, transparent 60%),
+                  radial-gradient(900px 700px at 100% 0%, #064e3b 0%, transparent 55%),
+                  var(--bg);
+      color:var(--text);
+      padding:24px;
+    }
+
+    .wrap{
+      max-width:980px;
+      margin:0 auto;
+      display:grid;
+      gap:16px;
+    }
+
+    header{
+      background: linear-gradient(135deg, #0ea5e9 0%, #22c55e 100%);
+      padding:18px;
+      border-radius: var(--radius);
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      flex-wrap:wrap;
+    }
+
+    .header-left{
+      display:grid;
+      gap:6px;
+      flex:1;
+      min-width:260px;
+    }
+
+    header h1{
+      margin:0;
+      font-size:1.25rem;
+      letter-spacing:.3px;
+    }
+
+    .date-box{
+      font-size:.98rem;
+      font-weight:700;
+      color:#ecfeff;
+    }
+
+    .meta{
+      font-size:.93rem;
+      opacity:.95;
+    }
+
+    .floating-timer{
+      position:fixed;
+      right:120px;
+      top:92px;
+      width:285px;
+      min-height:285px;
+      z-index:50;
+      background:rgba(15,23,42,.94);
+      border:1px solid rgba(56,189,248,.35);
+      border-radius:24px;
+      box-shadow:0 18px 42px rgba(0,0,0,.45);
+      backdrop-filter: blur(10px);
+      padding:16px;
+      display:grid;
+      gap:12px;
+      align-content:start;
+    }
+    
+    
+ .floating-clock{
+  position:fixed;
+  right:120px;
+  top:570px;
+  width:285px;
+  z-index:51;
+  background:rgba(15,23,42,.94);
+  border:1px solid rgba(56,189,248,.35);
+  border-radius:24px;
+  box-shadow:0 18px 42px rgba(0,0,0,.45);
+  backdrop-filter: blur(10px);
+  padding:16px;
+  display:grid;
+  gap:8px;
+  text-align:center;
+}
+
+.real-clock-label{
+  font-size:.82rem;
+  font-weight:900;
+  color:#bae6fd;
+  letter-spacing:.3px;
+}
+
+.real-clock-time{
+  font-size:2rem;
+  font-weight:950;
+  font-variant-numeric:tabular-nums;
+  color:#f8fafc;
+  line-height:1;
+}
+
+.real-clock-label{
+  font-size:.78rem;
+  font-weight:900;
+  color:#bae6fd;
+  letter-spacing:.3px;
+}
+
+.real-clock-time{
+  font-size:1.65rem;
+  font-weight:950;
+  font-variant-numeric:tabular-nums;
+  color:#f8fafc;
+  line-height:1;
+}
+
+    .timer-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+    }
+
+    .timer-title{
+      font-size:.92rem;
+      font-weight:900;
+      letter-spacing:.4px;
+      color:#dbeafe;
+    }
+
+    .timer-status{
+      font-size:.72rem;
+      color:#bbf7d0;
+      background:#052e1a;
+      border:1px solid #14532d;
+      border-radius:999px;
+      padding:3px 7px;
+      white-space:nowrap;
+    }
+
+    .timer-display{
+      font-size:2.05rem;
+      font-weight:950;
+      text-align:center;
+      font-variant-numeric:tabular-nums;
+      background:rgba(2,6,23,.55);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:13px 8px;
+      line-height:1;
+      color:#f8fafc;
+    }
+
+    .timer-inputs{
+      display:grid;
+      grid-template-columns:1fr 1fr 1fr;
+      gap:7px;
+    }
+
+    .timer-inputs label{
+      display:grid;
+      gap:4px;
+      color:var(--muted);
+      font-size:.72rem;
+      font-weight:800;
+      text-align:center;
+    }
+
+    .timer-inputs input{
+      width:100%;
+      padding:8px 6px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:#020617;
+      color:var(--text);
+      text-align:center;
+      font-weight:900;
+      font-size:.95rem;
+    }
+
+    .timer-controls{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px;
+    }
+
+    .timer-btn{
+      background:#0f172a;
+      color:var(--text);
+      border:1px solid var(--line);
+      padding:9px 8px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:900;
+      font-size:.82rem;
+    }
+
+    .timer-btn:hover{
+      transform:translateY(-1px);
+      border-color:#38bdf8;
+    }
+
+    .timer-btn.full{
+      grid-column:1 / -1;
+    }
+
+    .timer-btn.active-picker{
+      border-color:#22c55e;
+      background:#052e1a;
+      color:#bbf7d0;
+    }
+
+    .timer-help{
+      font-size:.76rem;
+      color:var(--muted);
+      line-height:1.35;
+      text-align:center;
+    }
+
+    .dur{
+      color:#cbd5e1;
+      cursor:pointer;
+      border-radius:8px;
+      transition:background .15s ease, color .15s ease;
+    }
+
+    .dur:hover{
+      background:rgba(34,197,94,.12);
+      color:#bbf7d0;
+    }
+
+    .duration-pick-mode .dur{
+      outline:1px dashed rgba(34,197,94,.55);
+      outline-offset:-4px;
+      background:rgba(34,197,94,.06);
+    }
+
+    .card{
+      background: rgba(18,26,43,.9);
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      padding:14px;
+      box-shadow: 0 8px 22px rgba(0,0,0,.25);
+    }
+
+    .section-title{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:8px 6px 12px;
+    }
+
+    .section-title h2{
+      margin:0;
+      font-size:1.05rem;
+      color:#dbeafe;
+      font-weight:700;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+
+    .badge{
+      font-size:.8rem;
+      padding:4px 8px;
+      border-radius:999px;
+      background:var(--card-2);
+      color:var(--muted);
+      border:1px solid var(--line);
+      white-space:nowrap;
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      overflow:hidden;
+      border-radius:12px;
+    }
+
+    thead th{
+      text-align:left;
+      font-size:.82rem;
+      color:var(--muted);
+      font-weight:600;
+      letter-spacing:.4px;
+      padding:10px 8px;
+      background:var(--card-2);
+      border-bottom:1px solid var(--line);
+    }
+
+    tbody td{
+      padding:10px 8px;
+      border-bottom:1px dashed var(--line);
+      vertical-align:middle;
+      font-size:.95rem;
+    }
+
+    tbody tr:last-child td{border-bottom:none;}
+
+    tbody tr:hover{background:rgba(56,189,248,.06);}
+
+    tbody tr{
+      cursor:move;
+      transition:opacity .15s ease, background .15s ease;
+    }
+
+    .dragging{
+      opacity:.45;
+      background:rgba(34,197,94,.12);
+    }
+
+    .time{
+      font-variant-numeric: tabular-nums;
+      color:#cbd5e1;
+      font-weight:600;
+    }
+
+    .task{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    input[type="checkbox"]{
+      width:18px;
+      height:18px;
+      accent-color: var(--accent);
+      cursor:pointer;
+    }
+
+    .done .task-text{
+      text-decoration: line-through;
+      color: #94a3b8;
+      opacity:.9;
+    }
+
+    .pill{
+      padding:2px 8px;
+      border-radius:999px;
+      font-size:.78rem;
+      border:1px solid var(--line);
+      color:var(--muted);
+      background:var(--card-2);
+      white-space:nowrap;
+    }
+
+    .pill.accent{color:#bbf7d0; border-color:#14532d; background:#052e1a;}
+    .pill.warn{color:#fde68a; border-color:#7c2d12; background:#2a1205;}
+
+    .btn{
+      background:var(--card-2);
+      color:var(--text);
+      border:1px solid var(--line);
+      padding:8px 12px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:600;
+      font-size:.9rem;
+    }
+
+    .btn:hover{
+      border-color:#334155;
+      transform: translateY(-1px);
+    }
+
+    .delete-task{
+      width:24px;
+      height:24px;
+      padding:0;
+      border-radius:50%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:14px;
+      font-weight:bold;
+      line-height:1;
+    }
+
+    .hint{
+      font-size:.9rem;
+      color:var(--muted);
+      line-height:1.4;
+    }
+
+    .footer{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+      color:var(--muted);
+      font-size:.9rem;
+      padding:6px 4px 0;
+    }
+
+    @media(min-width:1300px){
+      .wrap{
+        transform:translateX(-90px);
+      }
+    }
+
+    @media(max-width:1180px){
+      .floating-clock.
+      .floating-timer{
+        position:sticky;
+        top:12px;
+        width:100%;
+        min-height:auto;
+        border-radius:18px;
+        margin:0 auto 16px;
+      }
+
+      .timer-display{
+        font-size:1.7rem;
+      }
+
+      .timer-controls{
+        grid-template-columns:repeat(4, 1fr);
+      }
+
+      .timer-btn.full{
+        grid-column:auto;
+      }
+    }
+
+    @media(max-width:720px){
+      body{padding:12px;}
+      table{font-size:.86rem;}
+      thead th:nth-child(3),
+      tbody td:nth-child(3),
+      thead th:nth-child(5),
+      tbody td:nth-child(5){display:none;}
+      header h1{font-size:1.05rem;}
+      .section-title{align-items:flex-start; flex-direction:column;}
+
+      .timer-controls{
+        grid-template-columns:1fr 1fr;
+      }
+
+      .timer-btn.full{
+        grid-column:1 / -1;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<aside class="floating-clock" id="floatingClock">
+  <div class="real-clock-label">🕒 Hora actual</div>
+  <div class="real-clock-time" id="realClock">00:00:00</div>
+</aside>
+
+  <aside class="floating-timer" id="floatingTimer">
+   
+    <div class="timer-head">
+      <div class="timer-title">⏱ Temporizador</div>
+      <div class="timer-status" id="timerStatus">Listo</div>
+    </div>
+
+    <div class="timer-display" id="timerDisplay">00:15:00</div>
+
+    <div class="timer-inputs">
+      <label>
+        Horas
+        <input id="timerHours" type="number" min="0" value="0">
+      </label>
+      <label>
+        Minutos
+        <input id="timerMinutes" type="number" min="0" value="15">
+      </label>
+      <label>
+        Segundos
+        <input id="timerSeconds" type="number" min="0" value="0">
+      </label>
+    </div>
+
+    <div class="timer-controls">
+      <button class="timer-btn" id="startTimer">Iniciar</button>
+      <button class="timer-btn" id="pauseTimer">Pausar</button>
+      <button class="timer-btn" id="resetTimer">Reiniciar</button>
+      <button class="timer-btn" id="clearTimer">Limpiar</button>
+      <button class="timer-btn full" id="pickDuration">Elegir duración de tarea</button>
+    </div>
+
+    <div class="timer-help">
+      Puedes dar clic directo sobre cualquier duración, por ejemplo <b>20 min</b>, para cargarla al temporizador.
+    </div>
+  </aside>
+
+<div class="wrap">
+
+  <header>
+    <div class="header-left">
+      <div class="date-box" id="todayDate">Hoy es...</div>
+      <h1>Plan de tareas (inicio 7:00 AM → límite 11:30 PM)</h1>
+     
+      <div class="meta">3 bloques de trabajo. Puedes arrastrar tareas y los horarios se actualizan solos.</div>
+    </div>
+  </header>
+
+  <section class="card">
+    <div class="section-title">
+      <h2>
+  <span class="block-title" contenteditable="true" data-block-title="bloque1">🌅 Bloque 1 — 7:00 – 12:30</span>
+</h2>
+      <span class="badge">arranque + cuarto</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:56px;">✓</th>
+          <th>Actividad</th>
+          <th style="width:150px;">Duración</th>
+          <th style="width:160px;">Hora</th>
+          <th style="width:110px;">Tipo</th>
+          <th style="width:70px;">Acción</th>
+        </tr>
+      </thead>
+      <tbody data-start="7:00">
+        <tr data-id="t1">
+          <td><input type="checkbox"></td>
+          <td class="task"><span class="task-text">Hacer y tomar licuado</span></td>
+          <td class="dur">15 min</td>
+          <td class="time">7:00 – 7:15</td>
+          <td><span class="pill accent">energía</span></td>
+          <td><button class="btn delete-task">✕</button></td>
+        </tr>
+        <tr data-id="t2">
+          <td><input type="checkbox"></td>
+          <td class="task"><span class="task-text">Preparación rápida: lavar vaso, plan y herramientas</span></td>
+          <td class="dur">15 min</td>
+          <td class="time">7:15 – 7:30</td>
+          <td><span class="pill">orden</span></td>
+          <td><button class="btn delete-task">✕</button></td>
+        </tr>
+        <tr data-id="t3">
+          <td><input type="checkbox"></td>
+          <td class="task"><span class="task-text">Poner tapiz de techo y sellar esquinas de cuarto</span></td>
+          <td class="dur">30 min</td>
+          <td class="time">7:30 – 8:00</td>
+          <td><span class="pill warn">ensucia</span></td>
+          <td><button class="btn delete-task">✕</button></td>
+        </tr>
+        <tr data-id="t4">
+          <td><input type="checkbox"></td>
+          <td class="task"><span class="task-text">Arreglar conexiones y pintar esquina</span></td>
+          <td class="dur">20 min</td>
+          <td class="time">8:00 – 8:20</td>
+          <td><span class="pill warn">ensucia</span></td>
+          <td><button class="btn delete-task">✕</button></td>
+        </tr>
+        <tr data-id="t5">
+          <td><input type="checkbox"></td>
+          <td class="task"><span class="task-text">Barrer cuarto</span></td>
+          <td class="dur">10 min</td>
+          <td class="time">8:20 – 8:30</td>
+          <td><span class="pill">limpieza</span></td>
+          <td><button class="btn delete-task">✕</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <div class="section-title">
+      <h2>☀️ Bloque 2 — 12:30 – 18:00</h2>
+      <span class="badge">limpieza + manual</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:56px;">✓</th>
+          <th>Actividad</th>
+          <th style="width:150px;">Duración</th>
+          <th style="width:160px;">Hora</th>
+          <th style="width:110px;">Tipo</th>
+          <th style="width:70px;">Acción</th>
+        </tr>
+      </thead>
+      <tbody data-start="18:00">
+        <tr data-id="t6">
+          <td><input type="checkbox"></td>
+          <td class="task"><span class="task-text">Descanso corto</span></td>
+          <td class="dur">5 min</td>
+          <td class="time">8:30 – 8:35</td>
+          <td><span class="pill">descanso</span></td>
+          <td><button class="btn delete-task">✕</button></td>
+        </tr>
+        <tr data-id="t7">
+          <td><input type="checkbox"></td>
+          <td class="task"><span class="task-text">Lavar baño y barrerlo</span></td>
+          <td class="dur">15 min</td>
+          <td class="time">8:35 – 8:50</td>
+          <td><span class="pill">limpieza</span></td>
+          <td><button class="btn delete-task">✕</button></td>
+        </tr>
+        <tr data-id="t8">
+          <td><input type="checkbox"></td>
+          <td class="task"><span class="task-text">Poner alambre a tela de proyección para reforzarla</span></td>
+          <td class="dur">20 min</td>
+          <td class="time">8:50 – 9:10</td>
+          <td><span class="pill">manual</span></td>
+          <td><button class="btn delete-task">✕</button></td>
+        </tr>
+        <tr data-id="t9">
+          <td><input type="checkbox"></td>
+          <td class="task"><span class="task-text">Echar cables en caja</span></td>
+          <td class="dur">10 min</td>
+          <td class="time">9:10 – 9:20</td>
+          <td><span class="pill">orden</span></td>
+          <td><button class="btn delete-task">✕</button></td>
+        </tr>
+        <tr data-id="t10">
+          <td><input type="checkbox"></td>
+          <td class="task"><span class="task-text">Echar ropa en bolsa</span></td>
+          <td class="dur">10 min</td>
+          <td class="time">9:20 – 9:30</td>
+          <td><span class="pill">orden</span></td>
+          <td><button class="btn delete-task">✕</button></td>
+        </tr>
+        <tr data-id="t11">
+          <td><input type="checkbox"></td>
+          <td class="task"><span class="task-text">Cortar césped</span></td>
+          <td class="dur">25 min</td>
+          <td class="time">9:30 – 9:55</td>
+          <td><span class="pill">exterior</span></td>
+          <td><button class="btn delete-task">✕</button></td>
+        </tr>
+        <tr data-id="t12">
+          <td><input type="checkbox"></td>
+          <td class="task"><span class="task-text">Descanso corto</span></td>
+          <td class="dur">5 min</td>
+          <td class="time">9:55 – 10:00</td>
+          <td><span class="pill">descanso</span></td>
+          <td><button class="btn delete-task">✕</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <div class="section-title">
+      <h2>🧩 Bloque 3 — 18:00 – 23:30</h2>
+      <span class="badge">lavado + cierre</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:56px;">✓</th>
+          <th>Actividad</th>
+          <th style="width:150px;">Duración</th>
+          <th style="width:160px;">Hora</th>
+          <th style="width:110px;">Tipo</th>
+          <th style="width:70px;">Acción</th>
+        </tr>
+      </thead>
+      <tbody data-start="18:00">
+        <tr data-id="t13">
+          <td><input type="checkbox"></td>
+          <td class="task"><span class="task-text">Lavar ropa</span></td>
+          <td class="dur">20 min</td>
+          <td class="time">10:00 – 10:20</td>
+          <td><span class="pill">hogar</span></td>
+          <td><button class="btn delete-task">✕</button></td>
+        </tr>
+        <tr data-id="t14">
+          <td><input type="checkbox"></td>
+          <td class="task"><span class="task-text">Colgar ropa o dejarla lista</span></td>
+          <td class="dur">15 min</td>
+          <td class="time">10:20 – 10:35</td>
+          <td><span class="pill">hogar</span></td>
+          <td><button class="btn delete-task">✕</button></td>
+        </tr>
+        <tr data-id="t15">
+          <td><input type="checkbox"></td>
+          <td class="task"><span class="task-text">Ordenar herramientas y recoger basura</span></td>
+          <td class="dur">20 min</td>
+          <td class="time">10:35 – 10:55</td>
+          <td><span class="pill">orden</span></td>
+          <td><button class="btn delete-task">✕</button></td>
+        </tr>
+        <tr data-id="t16">
+          <td><input type="checkbox"></td>
+          <td class="task"><span class="task-text">Revisión final del cuarto, baño y patio</span></td>
+          <td class="dur">20 min</td>
+          <td class="time">10:55 – 11:15</td>
+          <td><span class="pill">revisión</span></td>
+          <td><button class="btn delete-task">✕</button></td>
+        </tr>
+        <tr data-id="t17">
+          <td><input type="checkbox"></td>
+          <td class="task"><span class="task-text">Descanso final / alistarte para lo siguiente</span></td>
+          <td class="dur">15 min</td>
+          <td class="time">11:15 – 11:30</td>
+          <td><span class="pill">descanso</span></td>
+          <td><button class="btn delete-task">✕</button></td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="hint" style="margin:10px 6px 0;">
+      Al mover una tarea dentro de cualquier bloque, la columna de hora se recalcula automáticamente.
+    </p>
+  </section>
+
+  <section class="card">
+    <div class="section-title">
+      <h2>➕ Administrar tareas</h2>
+      <span class="badge">editable</span>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;padding:6px;">
+      <input id="newTask" placeholder="Nueva tarea" style="flex:1;min-width:220px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card-2);color:var(--text);">
+      <input id="newDuration" placeholder="Duración, ej. 15 min" style="width:160px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card-2);color:var(--text);">
+      <button class="btn" id="addTaskBtn">Agregar tarea</button>
+    </div>
+  </section>
+
+  <div class="footer">
+    <div>Pro tip: da clic en la duración de una tarea para mandarla al temporizador 😌</div>
+    <div style="display:flex; gap:8px;">
+      <button class="btn" id="checkAll">Marcar todo</button>
+      <button class="btn" id="clearAll">Limpiar checks</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const STORAGE_KEY = "rutina_3_bloques_checks_v2";
+  let durationPickMode = false;
+
+   function updateRealClock(){
+  const now = new Date();
+
+  const time = new Intl.DateTimeFormat("es-MX", {
+    hour:"2-digit",
+    minute:"2-digit",
+    second:"2-digit",
+    hour12:false
+  }).format(now);
+
+  const clock = document.getElementById("realClock");
+  if(clock){
+    clock.textContent = time;
+  }
+}
+
+  function setTodayDate(){
+    const date = new Date();
+    const formatted = new Intl.DateTimeFormat("es-MX", {
+      weekday:"long",
+      day:"numeric",
+      month:"long",
+      year:"numeric"
+    }).format(date);
+
+    document.getElementById("todayDate").textContent =
+      "Hoy es " + formatted.charAt(0).toUpperCase() + formatted.slice(1);
+  }
+
+  function getRows(){
+    return document.querySelectorAll("tbody tr");
+  }
+
+  function parseDuration(text){
+    if(!text) return 0;
+
+    const lower = text.toLowerCase();
+    let total = 0;
+
+    const hourMatch = lower.match(/(\d+(?:\.\d+)?)\s*(h|hr|hrs|hora|horas)/);
+    if(hourMatch){
+      total += Math.round(parseFloat(hourMatch[1]) * 3600);
+    }
+
+    const minMatch = lower.match(/(\d+)\s*(m|min|minuto|minutos)/);
+    if(minMatch){
+      total += parseInt(minMatch[1], 10) * 60;
+    }
+
+    const secMatch = lower.match(/(\d+)\s*(s|seg|segundo|segundos)/);
+    if(secMatch){
+      total += parseInt(secMatch[1], 10);
+    }
+
+    if(total === 0){
+      const onlyNumber = lower.match(/^\s*(\d+)\s*$/);
+      if(onlyNumber){
+        total = parseInt(onlyNumber[1], 10) * 60;
+      }
+    }
+
+    return total;
+  }
+
+  function parseDurationToMinutes(text){
+    return Math.round(parseDuration(text) / 60);
+  }
+
+  function secondsToInputs(totalSeconds){
+    totalSeconds = Math.max(0, totalSeconds);
+
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    document.getElementById("timerHours").value = hours;
+    document.getElementById("timerMinutes").value = minutes;
+    document.getElementById("timerSeconds").value = seconds;
+  }
+
+  function setTimerFromTaskDuration(durationText){
+    const total = parseDuration(durationText);
+    if(total <= 0) return;
+
+    clearInterval(timerInterval);
+    timerInterval = null;
+
+    timerSeconds = total;
+    secondsToInputs(total);
+    updateTimerDisplay();
+
+    document.getElementById("timerStatus").textContent = "Duración cargada";
+    document.getElementById("pickDuration").classList.remove("active-picker");
+    document.body.classList.remove("duration-pick-mode");
+    durationPickMode = false;
+  }
+
+  function parseStartTime(value){
+    const parts = value.split(":").map(Number);
+    return (parts[0] * 60) + parts[1];
+  }
+
+  function formatTime(totalMinutes){
+    totalMinutes = ((totalMinutes % 1440) + 1440) % 1440;
+    const h = Math.floor(totalMinutes / 60);
+    const m = totalMinutes % 60;
+    return h + ":" + String(m).padStart(2, "0");
+  }
+
+  function updateTimes(){
+    document.querySelectorAll("tbody[data-start]").forEach(tbody=>{
+      let current = parseStartTime(tbody.dataset.start);
+
+      tbody.querySelectorAll("tr").forEach(row=>{
+        const durCell = row.querySelector(".dur");
+        const timeCell = row.querySelector(".time");
+        if(!durCell || !timeCell) return;
+
+        const durationMinutes = parseDurationToMinutes(durCell.textContent);
+        const start = current;
+        const end = current + durationMinutes;
+
+        if(durationMinutes > 0){
+          timeCell.textContent = formatTime(start) + " – " + formatTime(end);
+          current = end;
+        }else{
+          timeCell.textContent = "Manual";
+        }
+      });
+    });
+  }
+
+  function saveState(){
+    const state = {};
+    getRows().forEach((r, index)=>{
+      if(!r.dataset.id){
+        r.dataset.id = "manual_" + Date.now() + "_" + index;
+      }
+
+      const id = r.dataset.id;
+      const checked = r.querySelector("input[type=checkbox]")?.checked || false;
+      state[id] = checked;
+    });
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  function loadState(){
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return;
+
+    try{
+      const state = JSON.parse(raw);
+
+      getRows().forEach(r=>{
+        const id = r.dataset.id;
+        const cb = r.querySelector("input[type=checkbox]");
+
+        if(cb && state[id]){
+          cb.checked = true;
+          r.classList.add("done");
+        }
+      });
+    }catch(e){}
+  }
+
+  function activarFila(tr){
+    const cb = tr.querySelector("input[type=checkbox]");
+
+    if(cb && !cb.dataset.ready){
+      cb.dataset.ready = "true";
+
+      cb.addEventListener("change", ()=>{
+        tr.classList.toggle("done", cb.checked);
+        saveState();
+      });
+    }
+
+    tr.draggable = true;
+
+    if(!tr.dataset.dragReady){
+      tr.dataset.dragReady = "true";
+
+      tr.addEventListener("dragstart", ()=>{
+        tr.classList.add("dragging");
+      });
+
+      tr.addEventListener("dragend", ()=>{
+        tr.classList.remove("dragging");
+        updateTimes();
+        saveState();
+      });
+    }
+  }
+
+  document.querySelectorAll("tbody").forEach(tbody=>{
+    tbody.addEventListener("dragover", e=>{
+      e.preventDefault();
+
+      const dragging = document.querySelector(".dragging");
+      if(!dragging) return;
+
+      const rows = [...tbody.querySelectorAll("tr:not(.dragging)")];
+
+      const nextRow = rows.find(row=>{
+        const box = row.getBoundingClientRect();
+        return e.clientY < box.top + box.height / 2;
+      });
+
+      if(nextRow){
+        tbody.insertBefore(dragging, nextRow);
+      }else{
+        tbody.appendChild(dragging);
+      }
+
+      updateTimes();
+    });
+  });
+
+  document.getElementById("checkAll").addEventListener("click", ()=>{
+    getRows().forEach(r=>{
+      const cb = r.querySelector("input[type=checkbox]");
+      if(cb){
+        cb.checked = true;
+        r.classList.add("done");
+      }
+    });
+
+    saveState();
+  });
+
+  document.getElementById("clearAll").addEventListener("click", ()=>{
+    getRows().forEach(r=>{
+      const cb = r.querySelector("input[type=checkbox]");
+      if(cb){
+        cb.checked = false;
+        r.classList.remove("done");
+      }
+    });
+
+    saveState();
+  });
+
+  document.addEventListener("click", function(e){
+    if(e.target.classList.contains("delete-task")){
+      const row = e.target.closest("tr");
+
+      if(row){
+        row.remove();
+        updateTimes();
+        saveState();
+      }
+    }
+
+    if(e.target.classList.contains("dur")){
+      setTimerFromTaskDuration(e.target.textContent);
+    }
+  });
+
+  document.getElementById("addTaskBtn").addEventListener("click", function(){
+    const name = document.getElementById("newTask").value.trim();
+    const dur = document.getElementById("newDuration").value.trim() || "10 min";
+
+    if(!name) return;
+
+    const tbody = document.querySelectorAll("tbody[data-start]")[2] || document.querySelector("tbody[data-start]");
+    const tr = document.createElement("tr");
+
+    tr.dataset.id = "manual_" + Date.now();
+
+    tr.innerHTML = `
+      <td><input type="checkbox"></td>
+      <td class="task"><span class="task-text"></span></td>
+      <td class="dur"></td>
+      <td class="time">Manual</td>
+      <td><span class="pill">nueva</span></td>
+      <td><button class="btn delete-task">✕</button></td>
+    `;
+
+    tr.querySelector(".task-text").textContent = name;
+    tr.querySelector(".dur").textContent = dur;
+
+    tbody.appendChild(tr);
+    activarFila(tr);
+    updateTimes();
+    saveState();
+
+    document.getElementById("newTask").value = "";
+    document.getElementById("newDuration").value = "";
+  });
+
+  let timerInterval = null;
+  let timerSeconds = 15 * 60;
+
+  function getTotalSecondsFromInputs(){
+    const h = Math.max(0, parseInt(document.getElementById("timerHours").value || "0", 10));
+    const m = Math.max(0, parseInt(document.getElementById("timerMinutes").value || "0", 10));
+    const s = Math.max(0, parseInt(document.getElementById("timerSeconds").value || "0", 10));
+
+    return (h * 3600) + (m * 60) + s;
+  }
+
+  function updateTimerDisplay(){
+    const hours = Math.floor(timerSeconds / 3600);
+    const minutes = Math.floor((timerSeconds % 3600) / 60);
+    const seconds = timerSeconds % 60;
+
+    document.getElementById("timerDisplay").textContent =
+      String(hours).padStart(2, "0") + ":" +
+      String(minutes).padStart(2, "0") + ":" +
+      String(seconds).padStart(2, "0");
+  }
+
+  function playAlarm(){
+    try{
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      const ctx = new AudioContext();
+
+      for(let i = 0; i < 4; i++){
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = "sine";
+        osc.frequency.value = i % 2 === 0 ? 880 : 660;
+        gain.gain.value = 0.08;
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(ctx.currentTime + i * 0.32);
+        osc.stop(ctx.currentTime + i * 0.32 + 0.22);
+      }
+    }catch(e){}
+
+    document.getElementById("timerStatus").textContent = "Terminado";
+    alert("⏰ Tiempo terminado");
+  }
+
+  function setTimerFromInputs(){
+    timerSeconds = getTotalSecondsFromInputs();
+
+    if(timerSeconds <= 0){
+      timerSeconds = 60;
+      secondsToInputs(timerSeconds);
+    }
+
+    updateTimerDisplay();
+  }
+
+  document.getElementById("startTimer").addEventListener("click", ()=>{
+    if(timerInterval) return;
+
+    setTimerFromInputs();
+    document.getElementById("timerStatus").textContent = "Corriendo";
+
+    timerInterval = setInterval(()=>{
+      timerSeconds--;
+      updateTimerDisplay();
+
+      if(timerSeconds <= 0){
+        clearInterval(timerInterval);
+        timerInterval = null;
+        playAlarm();
+      }
+    }, 1000);
+  });
+
+  document.getElementById("pauseTimer").addEventListener("click", ()=>{
+    clearInterval(timerInterval);
+    timerInterval = null;
+    secondsToInputs(timerSeconds);
+    document.getElementById("timerStatus").textContent = "Pausado";
+  });
+
+  document.getElementById("resetTimer").addEventListener("click", ()=>{
+    clearInterval(timerInterval);
+    timerInterval = null;
+    setTimerFromInputs();
+    document.getElementById("timerStatus").textContent = "Reiniciado";
+  });
+
+  document.getElementById("clearTimer").addEventListener("click", ()=>{
+    clearInterval(timerInterval);
+    timerInterval = null;
+    timerSeconds = 0;
+    secondsToInputs(0);
+    updateTimerDisplay();
+    document.getElementById("timerStatus").textContent = "Limpio";
+  });
+
+  document.getElementById("pickDuration").addEventListener("click", ()=>{
+    durationPickMode = !durationPickMode;
+    document.getElementById("pickDuration").classList.toggle("active-picker", durationPickMode);
+    document.body.classList.toggle("duration-pick-mode", durationPickMode);
+    document.getElementById("timerStatus").textContent = durationPickMode ? "Elige duración" : "Listo";
+  });
+
+  ["timerHours", "timerMinutes", "timerSeconds"].forEach(id=>{
+    document.getElementById(id).addEventListener("change", ()=>{
+      if(!timerInterval){
+        setTimerFromInputs();
+        document.getElementById("timerStatus").textContent = "Listo";
+      }
+    });
+  });
+
+setTodayDate();
+updateRealClock();
+setInterval(updateRealClock, 1000);
+
+getRows().forEach(activarFila);
+updateTimes();
+loadState();
+updateTimerDisplay();
+</script>
+</body>
+</html>
