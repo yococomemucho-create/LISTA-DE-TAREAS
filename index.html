@@ -1152,16 +1152,22 @@
     });
   }
 
- function saveState(){
+function saveState(){
   syncCheckboxAttributes();
   removeDropPlaceholders();
 
-  const state = getBodies().map(tbody => ({
-    start: tbody.dataset.start,
-    rows: [...tbody.querySelectorAll("tr")].map(row => ({
-      html: row.outerHTML
-    }))
-  }));
+  const state = {
+    bodies: getBodies().map(tbody => ({
+      start: tbody.dataset.start,
+      html: tbody.innerHTML
+    })),
+    titles: {},
+    columnWidths: columnWidths || null
+  };
+
+  document.querySelectorAll("[data-block-title]").forEach(el => {
+    state.titles[el.dataset.blockTitle] = el.textContent.trim();
+  });
 
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
@@ -1172,16 +1178,34 @@ function loadState(){
 
   try{
     const state = JSON.parse(raw);
-    if(!Array.isArray(state)) return false;
+    if(!state || !Array.isArray(state.bodies)) return false;
 
     const bodies = getBodies();
     bodies.forEach((tbody, index) => {
-      const saved = state[index];
-      if(saved && Array.isArray(saved.rows)){
-        tbody.innerHTML = saved.rows.map(r => r.html).join("");
+      const saved = state.bodies[index];
+      if(saved && typeof saved.html === "string"){
+        tbody.innerHTML = saved.html;
       }
     });
 
+    if(state.titles){
+      document.querySelectorAll("[data-block-title]").forEach(el => {
+        const key = el.dataset.blockTitle;
+        if(typeof state.titles[key] === "string" && state.titles[key].trim()){
+          el.textContent = state.titles[key];
+        }
+      });
+    }
+
+    if(Array.isArray(state.columnWidths)){
+      columnWidths = state.columnWidths;
+    }
+
+    return true;
+  }catch(e){
+    return false;
+  }
+}
     return true;
   }catch(e){
     return false;
@@ -1559,7 +1583,7 @@ function loadState(){
       }
       el.classList.remove("editing-inline");
       if(rowEl) rowEl.draggable = true;
-      refreshScheduleNow();
+      refreshScheduleNow(); saveState(); 
     });
   }
 
@@ -1574,7 +1598,7 @@ function loadState(){
       taskText.spellcheck = false;
       taskText.tabIndex = editModeEnabled ? 0 : -1;
       bindEditableCell(taskText, () => {
-        refreshScheduleNow();
+        refreshScheduleNow(); saveState();
       });
     }
 
@@ -1583,7 +1607,7 @@ function loadState(){
       durCell.spellcheck = false;
       durCell.tabIndex = editModeEnabled ? 0 : -1;
       bindEditableCell(durCell, () => {
-        refreshScheduleNow();
+        refreshScheduleNow(); saveState();
       });
     }
 
@@ -1616,7 +1640,7 @@ function loadState(){
       document.querySelectorAll(".time-editing .start-editor").forEach(input => {
         input.blur();
       });
-      refreshScheduleNow();
+      refreshScheduleNow(); saveState();
     }
   }
 
@@ -1721,13 +1745,13 @@ function loadState(){
 
     if(taskText){
       bindEditableCell(taskText, () => {
-        refreshScheduleNow();
+        refreshScheduleNow(); saveState();
       });
     }
 
     if(durCell){
       bindEditableCell(durCell, () => {
-        refreshScheduleNow();
+        refreshScheduleNow(); saveState();
       });
     }
 
@@ -1755,7 +1779,7 @@ function loadState(){
       row.addEventListener("dragend", () => {
         row.classList.remove("dragging");
         draggingRow = null;
-        refreshScheduleNow();
+        refreshScheduleNow(); saveState();
       });
     }
 
@@ -1768,7 +1792,7 @@ function loadState(){
       });
       row.addEventListener("drop", e => {
         e.preventDefault();
-        refreshScheduleNow();
+        refreshScheduleNow(); saveState();
       });
     }
 
@@ -1798,7 +1822,7 @@ function setupDragContainers(){
 
       tbody.addEventListener("drop", e => {
         e.preventDefault();
-        refreshScheduleNow();
+        refreshScheduleNow(); saveState();
       });
     });
   }
@@ -1990,7 +2014,7 @@ function setupDragContainers(){
     const refreshBtn = document.getElementById("refreshScheduleBtn");
     if(refreshBtn){
       refreshBtn.addEventListener("click", () => {
-        refreshScheduleNow();
+        refreshScheduleNow(); saveState();
       });
     }
 
