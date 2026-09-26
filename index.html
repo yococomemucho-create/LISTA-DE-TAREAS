@@ -1152,37 +1152,41 @@
     });
   }
 
-  function saveState(){
-    syncCheckboxAttributes();
-    removeDropPlaceholders();
-    const state = {
-      bodies: getBodies().map(tbody => ({
-        start: tbody.dataset.start,
-        html: tbody.innerHTML
-      }))
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  }
+ function saveState(){
+  syncCheckboxAttributes();
+  removeDropPlaceholders();
 
-  function loadState(){
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if(!raw) return false;
-    try{
-      const state = JSON.parse(raw);
-      if(!state || !Array.isArray(state.bodies)) return false;
-      const bodies = getBodies();
-      bodies.forEach((tbody, index) => {
-        const saved = state.bodies[index];
-        if(saved && typeof saved.html === "string"){
-          tbody.innerHTML = saved.html;
-        }
-      });
-      return true;
-    }catch(e){
-      return false;
-    }
-  }
+  const state = getBodies().map(tbody => ({
+    start: tbody.dataset.start,
+    rows: [...tbody.querySelectorAll("tr")].map(row => ({
+      html: row.outerHTML
+    }))
+  }));
 
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function loadState(){
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if(!raw) return false;
+
+  try{
+    const state = JSON.parse(raw);
+    if(!Array.isArray(state)) return false;
+
+    const bodies = getBodies();
+    bodies.forEach((tbody, index) => {
+      const saved = state[index];
+      if(saved && Array.isArray(saved.rows)){
+        tbody.innerHTML = saved.rows.map(r => r.html).join("");
+      }
+    });
+
+    return true;
+  }catch(e){
+    return false;
+  }
+}
   function saveBlockTitles(){
     const titles = {};
     document.querySelectorAll("[data-block-title]").forEach(el => {
@@ -2122,7 +2126,7 @@ function cleanupLoadedDom(){
     requestPointerUpdate();
     saveState();
   }
-
+window.addEventListener("beforeunload", saveState);
   init();
 </script>
 
