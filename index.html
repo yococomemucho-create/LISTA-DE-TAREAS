@@ -110,10 +110,10 @@
 
 .floating-toggle{
   position:fixed;
-  right:85px;
+  left:18px;
   top:105px;
-  width:38px;
-  height:38px;
+  width:42px;
+  height:42px;
   border-radius:50%;
   border:1px solid rgba(56,189,248,.45);
   background:rgba(15,23,42,.96);
@@ -128,6 +128,35 @@
 
 .floating-toggle:hover{
   border-color:#22c55e;
+  transform:translateY(-1px);
+}
+
+.floating-toggle.edit-active{
+  border-color:#22c55e;
+  background:#052e1a;
+  color:#bbf7d0;
+}
+
+.refresh-toggle{
+  position:fixed;
+  left:70px;
+  top:105px;
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  border:1px solid rgba(56,189,248,.45);
+  background:rgba(15,23,42,.96);
+  color:#f8fafc;
+  font-size:20px;
+  font-weight:900;
+  line-height:1;
+  cursor:pointer;
+  z-index:80;
+  box-shadow:0 10px 24px rgba(0,0,0,.4);
+}
+
+.refresh-toggle:hover{
+  border-color:#38bdf8;
   transform:translateY(-1px);
 }
 
@@ -328,17 +357,50 @@
       border-collapse:collapse;
       overflow:hidden;
       border-radius:12px;
+      table-layout:fixed;
     }
 
     thead th{
+      position:relative;
       text-align:left;
       font-size:.82rem;
       color:var(--muted);
       font-weight:600;
       letter-spacing:.4px;
-      padding:10px 8px;
+      padding:10px 12px 10px 8px;
       background:var(--card-2);
       border-bottom:1px solid var(--line);
+      user-select:none;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+    .col-resizer{
+      position:absolute;
+      top:0;
+      right:-4px;
+      width:9px;
+      height:100%;
+      cursor:col-resize;
+      touch-action:none;
+      z-index:5;
+    }
+
+    .col-resizer::after{
+      content:"";
+      position:absolute;
+      top:0;
+      right:3px;
+      width:2px;
+      height:100%;
+      background:transparent;
+      transition:background .15s ease;
+    }
+
+    .col-resizer:hover::after,
+    .col-resizer.active::after{
+      background:rgba(56,189,248,.85);
     }
 
     tbody td{
@@ -346,6 +408,8 @@
       border-bottom:1px dashed var(--line);
       vertical-align:middle;
       font-size:.95rem;
+      overflow:hidden;
+      text-overflow:ellipsis;
     }
 
     tbody tr:last-child td{border-bottom:none;}
@@ -414,6 +478,115 @@
     .btn:hover{
       border-color:#334155;
       transform: translateY(-1px);
+    }
+
+    .row-actions{
+      display:flex;
+      gap:6px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+
+    .inline-editor{
+      width:100%;
+      padding:7px 8px;
+      border-radius:8px;
+      border:1px solid var(--line);
+      background:#020617;
+      color:var(--text);
+      font:inherit;
+      box-sizing:border-box;
+    }
+
+    .inline-editor:focus{
+      outline:2px solid rgba(56,189,248,.45);
+      outline-offset:1px;
+    }
+
+    .time-editor{
+      display:grid;
+      gap:5px;
+      min-width:130px;
+    }
+
+    .time-editor label{
+      display:grid;
+      gap:4px;
+      font-size:.7rem;
+      color:var(--muted);
+      font-weight:800;
+    }
+
+
+    .current-pointer{
+      position:fixed;
+      left:0;
+      top:120px;
+      z-index:250;
+      font-size:18px;
+      font-weight:900;
+      color:#38bdf8;
+      text-shadow:0 0 10px rgba(56,189,248,.55);
+      pointer-events:none;
+      transform:translate(-100%, -50%);
+      opacity:0;
+      transition:top .18s ease, left .18s ease, opacity .18s ease;
+    }
+
+    .task-text,
+    .dur{
+      outline:none;
+      border-radius:8px;
+    }
+
+    .task-text:focus,
+    .dur:focus{
+      background:rgba(56,189,248,.08);
+      box-shadow: inset 0 0 0 1px rgba(56,189,248,.35);
+    }
+
+    .time{
+      cursor:pointer;
+    }
+
+    .drop-placeholder td{
+      color:var(--muted);
+      font-style:italic;
+      text-align:center;
+      padding:14px 8px;
+      pointer-events:none;
+    }
+
+    .current-target{
+      box-shadow:0 0 0 2px rgba(56,189,248,.28) inset;
+      outline:2px solid rgba(56,189,248,.22);
+      outline-offset:0;
+    }
+
+    .current-target-row td{
+      background:rgba(56,189,248,.06);
+    }
+
+    .drop-placeholder td{
+      padding:10px 8px;
+      color:var(--muted);
+      font-size:.85rem;
+      text-align:center;
+      border-bottom:1px dashed var(--line);
+      background:rgba(15,23,42,.45);
+      font-style:italic;
+    }
+
+    .editing-inline{
+      outline:1px dashed rgba(56,189,248,.3);
+      outline-offset:-2px;
+    }
+
+    .edit-mode .task-text,
+    .edit-mode .dur,
+    .edit-mode .time{
+      cursor:text;
     }
 
     .delete-task{
@@ -556,12 +729,14 @@
   </style>
 </head>
 <body>
+<div id="currentPointer" class="current-pointer">➤</div>
 
 <aside class="floating-clock" id="floatingClock">
   <div class="real-clock-label">🕒 Hora actual</div>
   <div class="real-clock-time" id="realClock">00:00:00</div>
 </aside>
-  <button class="floating-toggle" id="floatingToggle" type="button">×</button>
+  <button class="floating-toggle" id="floatingToggle" type="button" aria-pressed="false">✎</button>
+  <button class="refresh-toggle" id="refreshScheduleBtn" type="button" title="Actualizar horarios">↻</button>
   <aside class="floating-timer" id="floatingTimer">
    
     <div class="timer-head">
@@ -620,12 +795,12 @@
     <table>
       <thead>
         <tr>
-          <th style="width:56px;">✓</th>
+          <th style="width:70px;">✓</th>
           <th>Actividad</th>
-          <th style="width:150px;">Duración</th>
-          <th style="width:160px;">Hora</th>
-          <th style="width:110px;">Tipo</th>
-          <th style="width:70px;">Acción</th>
+          <th style="width:190px;">Duración</th>
+          <th style="width:220px;">Hora</th>
+          <th style="width:140px;">Tipo</th>
+          <th style="width:110px;">Acción</th>
         </tr>
       </thead>
       <tbody data-start="7:00">
@@ -635,7 +810,7 @@
           <td class="dur">15 min</td>
           <td class="time">7:00 – 7:15</td>
           <td><span class="pill accent">energía</span></td>
-          <td><button class="btn delete-task">✕</button></td>
+          <td class="row-actions"><button class="btn delete-task" type="button">✕</button></td>
         </tr>
         <tr data-id="t2">
           <td><input type="checkbox"></td>
@@ -643,7 +818,7 @@
           <td class="dur">15 min</td>
           <td class="time">7:15 – 7:30</td>
           <td><span class="pill">orden</span></td>
-          <td><button class="btn delete-task">✕</button></td>
+          <td class="row-actions"><button class="btn delete-task" type="button">✕</button></td>
         </tr>
         <tr data-id="t3">
           <td><input type="checkbox"></td>
@@ -651,7 +826,7 @@
           <td class="dur">30 min</td>
           <td class="time">7:30 – 8:00</td>
           <td><span class="pill warn">ensucia</span></td>
-          <td><button class="btn delete-task">✕</button></td>
+          <td class="row-actions"><button class="btn delete-task" type="button">✕</button></td>
         </tr>
         <tr data-id="t4">
           <td><input type="checkbox"></td>
@@ -659,7 +834,7 @@
           <td class="dur">20 min</td>
           <td class="time">8:00 – 8:20</td>
           <td><span class="pill warn">ensucia</span></td>
-          <td><button class="btn delete-task">✕</button></td>
+          <td class="row-actions"><button class="btn delete-task" type="button">✕</button></td>
         </tr>
         <tr data-id="t5">
           <td><input type="checkbox"></td>
@@ -667,7 +842,7 @@
           <td class="dur">10 min</td>
           <td class="time">8:20 – 8:30</td>
           <td><span class="pill">limpieza</span></td>
-          <td><button class="btn delete-task">✕</button></td>
+          <td class="row-actions"><button class="btn delete-task" type="button">✕</button></td>
         </tr>
       </tbody>
     </table>
@@ -675,28 +850,28 @@
 
   <section class="card">
     <div class="section-title">
-      <h2>☀️ Bloque 2 — 12:30 – 18:00</h2>
+      <h2><span class="block-title" contenteditable="true" data-block-title="bloque2">☀️ Bloque 2 — 12:30 – 18:00</span></h2>
       <span class="badge">limpieza + manual</span>
     </div>
     <table>
       <thead>
         <tr>
-          <th style="width:56px;">✓</th>
+          <th style="width:64px;">✓</th>
           <th>Actividad</th>
-          <th style="width:150px;">Duración</th>
-          <th style="width:160px;">Hora</th>
-          <th style="width:110px;">Tipo</th>
-          <th style="width:70px;">Acción</th>
+          <th style="width:175px;">Duración</th>
+          <th style="width:195px;">Hora</th>
+          <th style="width:130px;">Tipo</th>
+          <th style="width:140px;">Acción</th>
         </tr>
       </thead>
-      <tbody data-start="18:00">
+      <tbody data-start="12:30">
         <tr data-id="t6">
           <td><input type="checkbox"></td>
           <td class="task"><span class="task-text">Descanso corto</span></td>
           <td class="dur">5 min</td>
           <td class="time">8:30 – 8:35</td>
           <td><span class="pill">descanso</span></td>
-          <td><button class="btn delete-task">✕</button></td>
+          <td class="row-actions"><button class="btn delete-task" type="button">✕</button></td>
         </tr>
         <tr data-id="t7">
           <td><input type="checkbox"></td>
@@ -704,7 +879,7 @@
           <td class="dur">15 min</td>
           <td class="time">8:35 – 8:50</td>
           <td><span class="pill">limpieza</span></td>
-          <td><button class="btn delete-task">✕</button></td>
+          <td class="row-actions"><button class="btn delete-task" type="button">✕</button></td>
         </tr>
         <tr data-id="t8">
           <td><input type="checkbox"></td>
@@ -712,7 +887,7 @@
           <td class="dur">20 min</td>
           <td class="time">8:50 – 9:10</td>
           <td><span class="pill">manual</span></td>
-          <td><button class="btn delete-task">✕</button></td>
+          <td class="row-actions"><button class="btn delete-task" type="button">✕</button></td>
         </tr>
         <tr data-id="t9">
           <td><input type="checkbox"></td>
@@ -720,7 +895,7 @@
           <td class="dur">10 min</td>
           <td class="time">9:10 – 9:20</td>
           <td><span class="pill">orden</span></td>
-          <td><button class="btn delete-task">✕</button></td>
+          <td class="row-actions"><button class="btn delete-task" type="button">✕</button></td>
         </tr>
         <tr data-id="t10">
           <td><input type="checkbox"></td>
@@ -728,7 +903,7 @@
           <td class="dur">10 min</td>
           <td class="time">9:20 – 9:30</td>
           <td><span class="pill">orden</span></td>
-          <td><button class="btn delete-task">✕</button></td>
+          <td class="row-actions"><button class="btn delete-task" type="button">✕</button></td>
         </tr>
         <tr data-id="t11">
           <td><input type="checkbox"></td>
@@ -736,7 +911,7 @@
           <td class="dur">25 min</td>
           <td class="time">9:30 – 9:55</td>
           <td><span class="pill">exterior</span></td>
-          <td><button class="btn delete-task">✕</button></td>
+          <td class="row-actions"><button class="btn delete-task" type="button">✕</button></td>
         </tr>
         <tr data-id="t12">
           <td><input type="checkbox"></td>
@@ -744,7 +919,7 @@
           <td class="dur">5 min</td>
           <td class="time">9:55 – 10:00</td>
           <td><span class="pill">descanso</span></td>
-          <td><button class="btn delete-task">✕</button></td>
+          <td class="row-actions"><button class="btn delete-task" type="button">✕</button></td>
         </tr>
       </tbody>
     </table>
@@ -752,18 +927,18 @@
 
   <section class="card">
     <div class="section-title">
-      <h2>🧩 Bloque 3 — 18:00 – 23:30</h2>
+      <h2><span class="block-title" contenteditable="true" data-block-title="bloque3">🧩 Bloque 3 — 18:00 – 23:30</span></h2>
       <span class="badge">lavado + cierre</span>
     </div>
     <table>
       <thead>
         <tr>
-          <th style="width:56px;">✓</th>
+          <th style="width:64px;">✓</th>
           <th>Actividad</th>
-          <th style="width:150px;">Duración</th>
-          <th style="width:160px;">Hora</th>
-          <th style="width:110px;">Tipo</th>
-          <th style="width:70px;">Acción</th>
+          <th style="width:175px;">Duración</th>
+          <th style="width:195px;">Hora</th>
+          <th style="width:130px;">Tipo</th>
+          <th style="width:140px;">Acción</th>
         </tr>
       </thead>
       <tbody data-start="18:00">
@@ -773,7 +948,7 @@
           <td class="dur">20 min</td>
           <td class="time">10:00 – 10:20</td>
           <td><span class="pill">hogar</span></td>
-          <td><button class="btn delete-task">✕</button></td>
+          <td class="row-actions"><button class="btn delete-task" type="button">✕</button></td>
         </tr>
         <tr data-id="t14">
           <td><input type="checkbox"></td>
@@ -781,7 +956,7 @@
           <td class="dur">15 min</td>
           <td class="time">10:20 – 10:35</td>
           <td><span class="pill">hogar</span></td>
-          <td><button class="btn delete-task">✕</button></td>
+          <td class="row-actions"><button class="btn delete-task" type="button">✕</button></td>
         </tr>
         <tr data-id="t15">
           <td><input type="checkbox"></td>
@@ -789,7 +964,7 @@
           <td class="dur">20 min</td>
           <td class="time">10:35 – 10:55</td>
           <td><span class="pill">orden</span></td>
-          <td><button class="btn delete-task">✕</button></td>
+          <td class="row-actions"><button class="btn delete-task" type="button">✕</button></td>
         </tr>
         <tr data-id="t16">
           <td><input type="checkbox"></td>
@@ -797,7 +972,7 @@
           <td class="dur">20 min</td>
           <td class="time">10:55 – 11:15</td>
           <td><span class="pill">revisión</span></td>
-          <td><button class="btn delete-task">✕</button></td>
+          <td class="row-actions"><button class="btn delete-task" type="button">✕</button></td>
         </tr>
         <tr data-id="t17">
           <td><input type="checkbox"></td>
@@ -805,7 +980,7 @@
           <td class="dur">15 min</td>
           <td class="time">11:15 – 11:30</td>
           <td><span class="pill">descanso</span></td>
-          <td><button class="btn delete-task">✕</button></td>
+          <td class="row-actions"><button class="btn delete-task" type="button">✕</button></td>
         </tr>
       </tbody>
     </table>
@@ -822,6 +997,7 @@
     <div style="display:flex;gap:8px;flex-wrap:wrap;padding:6px;">
       <input id="newTask" placeholder="Nueva tarea" style="flex:1;min-width:220px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card-2);color:var(--text);">
       <input id="newDuration" placeholder="Duración, ej. 15 min" style="width:160px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card-2);color:var(--text);">
+      <input id="newStart" type="time" title="Hora de inicio" style="width:150px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card-2);color:var(--text);">
       <button class="btn" id="addTaskBtn">Agregar tarea</button>
     </div>
   </section>
@@ -836,110 +1012,80 @@
 
 </div>
 
+
 <script>
-  const STORAGE_KEY = "rutina_3_bloques_checks_v2";
+  const STORAGE_KEY = "rutina_3_bloques_state_v5";
+  const TITLES_KEY = "rutina_3_bloques_titles_v2";
+  const FLOAT_KEY = "floating_tools_hidden";
+  const COLUMN_WIDTHS_KEY = "rutina_column_widths_v2";
+
   let durationPickMode = false;
+  let timerInterval = null;
+  let timerSeconds = 15 * 60;
+  let draggingRow = null;
+  let scheduleLock = false;
+  let columnWidths = null;
+  let pointerFrame = null;
+  let scheduleRefreshFrame = null;
+  let editModeEnabled = false;
 
-   function updateRealClock(){
-  const now = new Date();
-
-  const time = new Intl.DateTimeFormat("es-MX", {
-    hour:"2-digit",
-    minute:"2-digit",
-    second:"2-digit",
-    hour12:false
-  }).format(now);
-
-  const clock = document.getElementById("realClock");
-  if(clock){
-    clock.textContent = time;
+  function updateRealClock(){
+    const now = new Date();
+    const time = new Intl.DateTimeFormat("es-MX", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false
+    }).format(now);
+    const clock = document.getElementById("realClock");
+    if(clock) clock.textContent = time;
+    updateCurrentPointer(now);
   }
-}
 
   function setTodayDate(){
     const date = new Date();
     const formatted = new Intl.DateTimeFormat("es-MX", {
-      weekday:"long",
-      day:"numeric",
-      month:"long",
-      year:"numeric"
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric"
     }).format(date);
-
-    document.getElementById("todayDate").textContent =
-      "Hoy es " + formatted.charAt(0).toUpperCase() + formatted.slice(1);
-  }
-
-  function getRows(){
-    return document.querySelectorAll("tbody tr");
+    const target = document.getElementById("todayDate");
+    if(target){
+      target.textContent = "Hoy es " + formatted.charAt(0).toUpperCase() + formatted.slice(1);
+    }
   }
 
   function parseDuration(text){
     if(!text) return 0;
-
-    const lower = text.toLowerCase();
+    const lower = String(text).toLowerCase().trim();
     let total = 0;
 
     const hourMatch = lower.match(/(\d+(?:\.\d+)?)\s*(h|hr|hrs|hora|horas)/);
-    if(hourMatch){
-      total += Math.round(parseFloat(hourMatch[1]) * 3600);
-    }
+    if(hourMatch) total += Math.round(parseFloat(hourMatch[1]) * 3600);
 
     const minMatch = lower.match(/(\d+)\s*(m|min|minuto|minutos)/);
-    if(minMatch){
-      total += parseInt(minMatch[1], 10) * 60;
-    }
+    if(minMatch) total += parseInt(minMatch[1], 10) * 60;
 
     const secMatch = lower.match(/(\d+)\s*(s|seg|segundo|segundos)/);
-    if(secMatch){
-      total += parseInt(secMatch[1], 10);
-    }
+    if(secMatch) total += parseInt(secMatch[1], 10);
 
     if(total === 0){
       const onlyNumber = lower.match(/^\s*(\d+)\s*$/);
-      if(onlyNumber){
-        total = parseInt(onlyNumber[1], 10) * 60;
-      }
+      if(onlyNumber) total = parseInt(onlyNumber[1], 10) * 60;
     }
-
     return total;
   }
 
   function parseDurationToMinutes(text){
-    return Math.round(parseDuration(text) / 60);
-  }
-
-  function secondsToInputs(totalSeconds){
-    totalSeconds = Math.max(0, totalSeconds);
-
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-
-    document.getElementById("timerHours").value = hours;
-    document.getElementById("timerMinutes").value = minutes;
-    document.getElementById("timerSeconds").value = seconds;
-  }
-
-  function setTimerFromTaskDuration(durationText){
-    const total = parseDuration(durationText);
-    if(total <= 0) return;
-
-    clearInterval(timerInterval);
-    timerInterval = null;
-
-    timerSeconds = total;
-    secondsToInputs(total);
-    updateTimerDisplay();
-
-    document.getElementById("timerStatus").textContent = "Duración cargada";
-    document.getElementById("pickDuration").classList.remove("active-picker");
-    document.body.classList.remove("duration-pick-mode");
-    durationPickMode = false;
+    return Math.max(0, Math.round(parseDuration(text) / 60));
   }
 
   function parseStartTime(value){
-    const parts = value.split(":").map(Number);
-    return (parts[0] * 60) + parts[1];
+    if(typeof value !== "string") return null;
+    const match = value.trim().match(/^([01]?\d|2[0-3]):([0-5]\d)$/);
+    if(!match) return null;
+    return (parseInt(match[1], 10) * 60) + parseInt(match[2], 10);
   }
 
   function formatTime(totalMinutes){
@@ -949,334 +1095,1037 @@
     return h + ":" + String(m).padStart(2, "0");
   }
 
-  function updateTimes(){
-    document.querySelectorAll("tbody[data-start]").forEach(tbody=>{
-      let current = parseStartTime(tbody.dataset.start);
+  function formatTimeInput(totalMinutes){
+    totalMinutes = ((totalMinutes % 1440) + 1440) % 1440;
+    const h = String(Math.floor(totalMinutes / 60)).padStart(2, "0");
+    const m = String(totalMinutes % 60).padStart(2, "0");
+    return `${h}:${m}`;
+  }
 
-      tbody.querySelectorAll("tr").forEach(row=>{
-        const durCell = row.querySelector(".dur");
-        const timeCell = row.querySelector(".time");
-        if(!durCell || !timeCell) return;
+  function formatRange(startMinutes, durationMinutes){
+    return `${formatTime(startMinutes)} – ${formatTime(startMinutes + durationMinutes)}`;
+  }
 
-        const durationMinutes = parseDurationToMinutes(durCell.textContent);
-        const start = current;
-        const end = current + durationMinutes;
+  function getBodies(){
+    return [...document.querySelectorAll("tbody[data-start]")];
+  }
 
-        if(durationMinutes > 0){
-          timeCell.textContent = formatTime(start) + " – " + formatTime(end);
-          current = end;
-        }else{
-          timeCell.textContent = "Manual";
-        }
-      });
+  function getRows(){
+    return [...document.querySelectorAll("tbody[data-start] tr:not(.drop-placeholder)")];
+  }
+
+  function getBodyBoundaries(){
+    return getBodies()
+      .map(tbody => ({ tbody, start: parseStartTime(tbody.dataset.start) ?? 0 }))
+      .sort((a, b) => a.start - b.start);
+  }
+
+  function findBodyIndexForStart(start, boundaries){
+    for(let i = boundaries.length - 1; i >= 0; i--){
+      if(start >= boundaries[i].start) return i;
+    }
+    return 0;
+  }
+
+  function removeDropPlaceholders(){
+    document.querySelectorAll(".drop-placeholder").forEach(el => el.remove());
+  }
+
+  function ensureDropPlaceholders(){
+    getBodies().forEach(tbody => {
+      const hasRows = !!tbody.querySelector("tr:not(.drop-placeholder)");
+      if(hasRows) return;
+      if(tbody.querySelector(".drop-placeholder")) return;
+      const placeholder = document.createElement("tr");
+      placeholder.className = "drop-placeholder";
+      placeholder.innerHTML = '<td colspan="6">Suelta una tarea aquí</td>';
+      tbody.appendChild(placeholder);
+    });
+  }
+
+  function syncCheckboxAttributes(){
+    getRows().forEach(row => {
+      const cb = row.querySelector('input[type="checkbox"]');
+      if(!cb) return;
+      if(cb.checked) cb.setAttribute("checked", "checked");
+      else cb.removeAttribute("checked");
     });
   }
 
   function saveState(){
-    const state = {};
-    getRows().forEach((r, index)=>{
-      if(!r.dataset.id){
-        r.dataset.id = "manual_" + Date.now() + "_" + index;
-      }
-
-      const id = r.dataset.id;
-      const checked = r.querySelector("input[type=checkbox]")?.checked || false;
-      state[id] = checked;
-    });
-
+    syncCheckboxAttributes();
+    removeDropPlaceholders();
+    const state = {
+      bodies: getBodies().map(tbody => ({
+        start: tbody.dataset.start,
+        html: tbody.innerHTML
+      }))
+    };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }
 
   function loadState(){
     const raw = localStorage.getItem(STORAGE_KEY);
-    if(!raw) return;
-
+    if(!raw) return false;
     try{
       const state = JSON.parse(raw);
+      if(!state || !Array.isArray(state.bodies)) return false;
+      const bodies = getBodies();
+      bodies.forEach((tbody, index) => {
+        const saved = state.bodies[index];
+        if(saved && typeof saved.html === "string"){
+          tbody.innerHTML = saved.html;
+        }
+      });
+      return true;
+    }catch(e){
+      return false;
+    }
+  }
 
-      getRows().forEach(r=>{
-        const id = r.dataset.id;
-        const cb = r.querySelector("input[type=checkbox]");
+  function saveBlockTitles(){
+    const titles = {};
+    document.querySelectorAll("[data-block-title]").forEach(el => {
+      titles[el.dataset.blockTitle] = el.textContent.trim();
+    });
+    localStorage.setItem(TITLES_KEY, JSON.stringify(titles));
+  }
 
-        if(cb && state[id]){
-          cb.checked = true;
-          r.classList.add("done");
+  function loadBlockTitles(){
+    const raw = localStorage.getItem(TITLES_KEY);
+    if(!raw) return;
+    try{
+      const titles = JSON.parse(raw);
+      document.querySelectorAll("[data-block-title]").forEach(el => {
+        const key = el.dataset.blockTitle;
+        if(typeof titles[key] === "string" && titles[key].trim()){
+          el.textContent = titles[key];
         }
       });
     }catch(e){}
   }
 
-  function activarFila(tr){
-    const cb = tr.querySelector("input[type=checkbox]");
-
-    if(cb && !cb.dataset.ready){
-      cb.dataset.ready = "true";
-
-      cb.addEventListener("change", ()=>{
-        tr.classList.toggle("done", cb.checked);
-        saveState();
+  function enableBlockTitleEditing(){
+    document.querySelectorAll("[data-block-title]").forEach(el => {
+      if(el.dataset.titleReady) return;
+      el.dataset.titleReady = "true";
+      el.contentEditable = "true";
+      el.spellcheck = false;
+      el.addEventListener("keydown", e => {
+        if(e.key === "Enter"){
+          e.preventDefault();
+          el.blur();
+        }
       });
+      el.addEventListener("input", saveBlockTitles);
+      el.addEventListener("blur", saveBlockTitles);
+    });
+  }
+
+  function applyColumnWidths(widths){
+    columnWidths = widths.slice(0, 6);
+    document.querySelectorAll("section.card table").forEach(table => {
+      let colgroup = table.querySelector("colgroup");
+      if(!colgroup){
+        colgroup = document.createElement("colgroup");
+        const headerCount = table.querySelectorAll("thead th").length || 6;
+        for(let i = 0; i < headerCount; i++){
+          colgroup.appendChild(document.createElement("col"));
+        }
+        table.prepend(colgroup);
+      }
+      const cols = [...table.querySelectorAll("colgroup col")];
+      columnWidths.forEach((w, idx) => {
+        if(cols[idx]) cols[idx].style.width = `${Math.max(50, Math.round(w))}px`;
+      });
+      [...table.querySelectorAll("thead th")].forEach((th, idx) => {
+        if(columnWidths[idx]) th.style.width = `${Math.max(50, Math.round(columnWidths[idx]))}px`;
+      });
+    });
+  }
+
+  function getDefaultColumnWidths(){
+    const table = document.querySelector("section.card table");
+    if(!table) return [56, 360, 150, 160, 110, 70];
+    const headers = [...table.querySelectorAll("thead th")];
+    if(headers.length < 6) return [56, 360, 150, 160, 110, 70];
+    return headers.map(th => Math.max(48, Math.round(th.getBoundingClientRect().width)));
+  }
+
+  function loadColumnWidths(){
+    const raw = localStorage.getItem(COLUMN_WIDTHS_KEY);
+    if(raw){
+      try{
+        const parsed = JSON.parse(raw);
+        if(Array.isArray(parsed) && parsed.length >= 6){
+          applyColumnWidths(parsed.slice(0, 6));
+          return;
+        }
+      }catch(e){}
     }
+    applyColumnWidths(getDefaultColumnWidths());
+  }
 
-    tr.draggable = true;
-
-    if(!tr.dataset.dragReady){
-      tr.dataset.dragReady = "true";
-
-      tr.addEventListener("dragstart", ()=>{
-        tr.classList.add("dragging");
-      });
-
-      tr.addEventListener("dragend", ()=>{
-        tr.classList.remove("dragging");
-        updateTimes();
-        saveState();
-      });
+  function saveColumnWidths(){
+    if(Array.isArray(columnWidths)){
+      localStorage.setItem(COLUMN_WIDTHS_KEY, JSON.stringify(columnWidths));
     }
   }
 
-  document.querySelectorAll("tbody").forEach(tbody=>{
-    tbody.addEventListener("dragover", e=>{
-      e.preventDefault();
-
-      const dragging = document.querySelector(".dragging");
-      if(!dragging) return;
-
-      const rows = [...tbody.querySelectorAll("tr:not(.dragging)")];
-
-      const nextRow = rows.find(row=>{
-        const box = row.getBoundingClientRect();
-        return e.clientY < box.top + box.height / 2;
+  function setupColumnResizers(){
+    document.querySelectorAll("section.card table").forEach(table => {
+      [...table.querySelectorAll("thead th")].forEach((th, idx) => {
+        if(idx >= 5) return;
+        if(th.querySelector(".col-resizer")) return;
+        const handle = document.createElement("span");
+        handle.className = "col-resizer";
+        handle.dataset.col = String(idx);
+        th.appendChild(handle);
       });
+    });
 
-      if(nextRow){
-        tbody.insertBefore(dragging, nextRow);
+    document.addEventListener("pointerdown", e => {
+      const handle = e.target.closest(".col-resizer");
+      if(!handle) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      const colIndex = parseInt(handle.dataset.col, 10);
+      if(Number.isNaN(colIndex)) return;
+      if(!columnWidths) loadColumnWidths();
+
+      const startWidths = columnWidths.slice();
+      const startX = e.clientX;
+      const minWidths = [56, 160, 90, 110, 90, 70];
+
+      const onMove = ev => {
+        const delta = ev.clientX - startX;
+        const nextIndex = colIndex + 1;
+        if(nextIndex >= startWidths.length) return;
+
+        const nextWidths = startWidths.slice();
+        const current = Math.max(minWidths[colIndex] || 56, Math.round(startWidths[colIndex] + delta));
+        const diff = current - startWidths[colIndex];
+        let next = Math.max(minWidths[nextIndex] || 56, Math.round(startWidths[nextIndex] - diff));
+
+        if(current + next !== startWidths[colIndex] + startWidths[nextIndex]){
+          next = Math.max(minWidths[nextIndex] || 56, (startWidths[colIndex] + startWidths[nextIndex]) - current);
+        }
+
+        nextWidths[colIndex] = current;
+        nextWidths[nextIndex] = next;
+        applyColumnWidths(nextWidths);
+      };
+
+      const onUp = () => {
+        window.removeEventListener("pointermove", onMove);
+        saveColumnWidths();
+        requestPointerUpdate();
+      };
+
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp, { once: true });
+    });
+  }
+
+  function clearCurrentHighlights(){
+    document.querySelectorAll(".current-target, .current-target-row").forEach(el => {
+      el.classList.remove("current-target", "current-target-row");
+    });
+  }
+
+  function getCurrentMinutes(date = new Date()){
+    return date.getHours() * 60 + date.getMinutes() + (date.getSeconds() / 60);
+  }
+
+  function requestPointerUpdate(){
+    if(pointerFrame) return;
+    pointerFrame = requestAnimationFrame(() => {
+      pointerFrame = null;
+      updateCurrentPointer(new Date());
+    });
+  }
+
+  function refreshScheduleNow(){
+    normalizeSchedule("manual");
+    saveState();
+    requestPointerUpdate();
+  }
+
+  function queueScheduleRefresh(){
+    if(scheduleRefreshFrame) cancelAnimationFrame(scheduleRefreshFrame);
+    scheduleRefreshFrame = requestAnimationFrame(() => {
+      scheduleRefreshFrame = null;
+      normalizeSchedule("dom");
+      saveState();
+      requestPointerUpdate();
+    });
+  }
+
+  function updateCurrentPointer(now = new Date()){
+    const pointer = document.getElementById("currentPointer");
+    if(!pointer) return;
+
+    const boundaries = getBodyBoundaries();
+    if(!boundaries.length){
+      pointer.style.opacity = "0";
+      return;
+    }
+
+    const minutes = getCurrentMinutes(now);
+    clearCurrentHighlights();
+
+    const rows = getRows().filter(row => row.dataset.computedStart && row.dataset.computedEnd);
+    let activeRow = rows.find(row => {
+      const start = parseFloat(row.dataset.computedStart);
+      const end = parseFloat(row.dataset.computedEnd);
+      return minutes >= start && minutes < end;
+    });
+
+    if(!activeRow){
+      const firstStart = boundaries[0]?.start ?? 0;
+      const lastBoundary = boundaries[boundaries.length - 1];
+      const lastRows = [...(lastBoundary?.tbody?.querySelectorAll("tr:not(.drop-placeholder)") || [])];
+      const lastRow = lastRows[lastRows.length - 1] || null;
+      if(minutes < firstStart || minutes >= 1440){
+        activeRow = lastRow;
+      }else if(minutes >= (lastBoundary?.start ?? 0)){
+        activeRow = lastRow;
+      }
+    }
+
+    let target = null;
+    let anchor = null;
+    if(activeRow){
+      activeRow.classList.add("current-target-row");
+      target = activeRow;
+      anchor = activeRow;
+    }else{
+      let bodyIndex = boundaries.length - 1;
+      for(let i = 0; i < boundaries.length; i++){
+        const start = boundaries[i].start;
+        const next = boundaries[i + 1]?.start ?? 1440;
+        if(minutes < start){
+          bodyIndex = Math.max(0, i - 1);
+          break;
+        }
+        if(minutes >= start && minutes < next){
+          bodyIndex = i;
+          break;
+        }
+      }
+      target = boundaries[bodyIndex]?.tbody?.closest(".card") || document.querySelector(".card");
+      anchor = target;
+      if(target) target.classList.add("current-target");
+    }
+
+    if(!target || !anchor){
+      pointer.style.opacity = "0";
+      return;
+    }
+
+    const rect = anchor.getBoundingClientRect();
+    pointer.style.opacity = "1";
+    pointer.style.left = `${Math.max(6, Math.round(rect.left - 10))}px`;
+    pointer.style.top = `${Math.round(rect.top + (rect.height / 2))}px`;
+  }
+
+  function bindEditableCell(el, onSave){
+    if(!el || el.dataset.editBound === "true") return;
+    el.dataset.editBound = "true";
+    el.spellcheck = false;
+
+    let before = el.textContent.trim();
+    let autoSaveTimer = null;
+
+    const scheduleAutoSave = () => {
+      if(autoSaveTimer) clearTimeout(autoSaveTimer);
+      autoSaveTimer = setTimeout(() => {
+        autoSaveTimer = null;
+        if(typeof onSave === "function") onSave(el.textContent.trim(), el);
+      }, 300);
+    };
+
+    el.addEventListener("focus", () => {
+      const row = el.closest("tr");
+      if(row) row.draggable = false;
+      before = el.textContent.trim();
+      el.classList.add("editing-inline");
+    });
+
+    el.addEventListener("input", () => {
+      if(!editModeEnabled) return;
+      scheduleAutoSave();
+    });
+
+    el.addEventListener("keydown", e => {
+      if(e.key === "Enter"){
+        e.preventDefault();
+        el.blur();
+      }
+      if(e.key === "Escape"){
+        e.preventDefault();
+        if(autoSaveTimer){
+          clearTimeout(autoSaveTimer);
+          autoSaveTimer = null;
+        }
+        el.textContent = before;
+        el.blur();
+      }
+    });
+
+    el.addEventListener("blur", () => {
+      const row = el.closest("tr");
+      if(autoSaveTimer){
+        clearTimeout(autoSaveTimer);
+        autoSaveTimer = null;
+      }
+      const cleaned = el.textContent.replace(/\s+/g, " ").trim();
+      if(cleaned) el.textContent = cleaned;
+      else el.textContent = before;
+      el.classList.remove("editing-inline");
+      if(row) row.draggable = true;
+      if(typeof onSave === "function") onSave(el.textContent.trim(), el);
+    });
+  }
+
+  function bindTimeEditableCell(el, row){
+    if(!el || el.dataset.timeEditBound === "true") return;
+    el.dataset.timeEditBound = "true";
+    el.spellcheck = false;
+
+    let before = "";
+    let internalUpdate = false;
+
+    const getCurrentMinutes = () => {
+      const manual = row?.dataset.manualStart ? parseInt(row.dataset.manualStart, 10) : null;
+      if(manual !== null && !Number.isNaN(manual)) return manual;
+      const computed = row?.dataset.computedStart ? parseInt(row.dataset.computedStart, 10) : null;
+      if(computed !== null && !Number.isNaN(computed)) return computed;
+      const parsed = parseStartTime((el.textContent || "").split("–")[0].trim());
+      return parsed !== null ? parsed : null;
+    };
+
+    el.addEventListener("focus", () => {
+      if(!editModeEnabled || internalUpdate) return;
+      const rowEl = el.closest("tr");
+      if(rowEl) rowEl.draggable = false;
+      before = el.textContent.trim();
+      const minutes = getCurrentMinutes();
+      if(minutes !== null){
+        internalUpdate = true;
+        el.textContent = formatTimeInput(minutes);
+        internalUpdate = false;
+      }
+      el.classList.add("editing-inline");
+    });
+
+    el.addEventListener("keydown", e => {
+      if(!editModeEnabled) return;
+      if(e.key === "Enter"){
+        e.preventDefault();
+        el.blur();
+      }
+      if(e.key === "Escape"){
+        e.preventDefault();
+        internalUpdate = true;
+        el.textContent = before;
+        internalUpdate = false;
+        el.blur();
+      }
+    });
+
+    el.addEventListener("blur", () => {
+      if(!editModeEnabled) return;
+      const rowEl = el.closest("tr");
+      const cleaned = el.textContent.replace(/\s+/g, " ").trim();
+      const minutes = parseStartTime(cleaned);
+      if(minutes !== null){
+        row.dataset.manualStart = String(minutes);
+      }else if(before){
+        const fallback = parseStartTime(before.split("–")[0].trim());
+        if(fallback !== null){
+          row.dataset.manualStart = String(fallback);
+        }else{
+          delete row.dataset.manualStart;
+        }
       }else{
-        tbody.appendChild(dragging);
+        delete row.dataset.manualStart;
       }
-
-      updateTimes();
+      el.classList.remove("editing-inline");
+      if(rowEl) rowEl.draggable = true;
+      refreshScheduleNow();
     });
-  });
+  }
 
-  document.getElementById("checkAll").addEventListener("click", ()=>{
-    getRows().forEach(r=>{
-      const cb = r.querySelector("input[type=checkbox]");
-      if(cb){
-        cb.checked = true;
-        r.classList.add("done");
-      }
-    });
+  function applyEditModeToRow(row){
+    if(!row) return;
+    const taskText = row.querySelector(".task-text");
+    const durCell = row.querySelector(".dur");
+    const timeCell = row.querySelector(".time");
 
-    saveState();
-  });
-
-  document.getElementById("clearAll").addEventListener("click", ()=>{
-    getRows().forEach(r=>{
-      const cb = r.querySelector("input[type=checkbox]");
-      if(cb){
-        cb.checked = false;
-        r.classList.remove("done");
-      }
-    });
-
-    saveState();
-  });
-
-  document.addEventListener("click", function(e){
-    if(e.target.classList.contains("delete-task")){
-      const row = e.target.closest("tr");
-
-      if(row){
-        row.remove();
-        updateTimes();
-        saveState();
-      }
+    if(taskText){
+      taskText.contentEditable = editModeEnabled ? "true" : "false";
+      taskText.spellcheck = false;
+      taskText.tabIndex = editModeEnabled ? 0 : -1;
+      bindEditableCell(taskText, () => {
+        refreshScheduleNow();
+      });
     }
 
-    if(e.target.classList.contains("dur")){
-      setTimerFromTaskDuration(e.target.textContent);
+    if(durCell){
+      durCell.contentEditable = editModeEnabled ? "true" : "false";
+      durCell.spellcheck = false;
+      durCell.tabIndex = editModeEnabled ? 0 : -1;
+      bindEditableCell(durCell, () => {
+        refreshScheduleNow();
+      });
     }
-  });
 
-  document.getElementById("addTaskBtn").addEventListener("click", function(){
-    const name = document.getElementById("newTask").value.trim();
-    const dur = document.getElementById("newDuration").value.trim() || "10 min";
+    if(timeCell){
+      timeCell.contentEditable = editModeEnabled ? "true" : "false";
+      timeCell.spellcheck = false;
+      timeCell.tabIndex = editModeEnabled ? 0 : -1;
+      timeCell.style.cursor = editModeEnabled ? "text" : "default";
+      bindTimeEditableCell(timeCell, row);
+    }
 
-    if(!name) return;
+    row.classList.toggle("edit-mode-row", editModeEnabled);
+  }
 
-    const tbody = document.querySelectorAll("tbody[data-start]")[2] || document.querySelector("tbody[data-start]");
-    const tr = document.createElement("tr");
+  function setEditMode(enabled){
+    editModeEnabled = !!enabled;
+    document.body.classList.toggle("edit-mode", editModeEnabled);
 
-    tr.dataset.id = "manual_" + Date.now();
+    const btn = document.getElementById("floatingToggle");
+    if(btn){
+      btn.textContent = editModeEnabled ? "✓" : "✎";
+      btn.classList.toggle("edit-active", editModeEnabled);
+      btn.title = editModeEnabled ? "Desactivar edición" : "Activar edición";
+      btn.setAttribute("aria-pressed", String(editModeEnabled));
+    }
 
-    tr.innerHTML = `
-      <td><input type="checkbox"></td>
-      <td class="task"><span class="task-text"></span></td>
-      <td class="dur"></td>
-      <td class="time">Manual</td>
-      <td><span class="pill">nueva</span></td>
-      <td><button class="btn delete-task">✕</button></td>
+    getRows().forEach(applyEditModeToRow);
+
+    if(!editModeEnabled){
+      document.querySelectorAll(".time-editing .start-editor").forEach(input => {
+        input.blur();
+      });
+      refreshScheduleNow();
+    }
+  }
+
+  function setEditableText(el, onSave){
+    bindEditableCell(el, onSave);
+    if(el){
+      el.contentEditable = editModeEnabled ? "true" : "false";
+      el.spellcheck = false;
+    }
+  }
+
+  function startTimeEdit(row){
+    if(!row || row.classList.contains("time-editing")) return;
+    const timeCell = row.querySelector(".time");
+    if(!timeCell) return;
+
+    row.classList.add("time-editing");
+    row.draggable = false;
+
+    const originalText = timeCell.textContent.trim();
+    const currentValue = row.dataset.manualStart
+      ? formatTimeInput(parseInt(row.dataset.manualStart, 10))
+      : "";
+
+    timeCell.innerHTML = `
+      <div class="time-editor">
+        <label>Hora de inicio
+          <input class="inline-editor start-editor" type="time" value="${currentValue}">
+        </label>
+      </div>
     `;
 
-    tr.querySelector(".task-text").textContent = name;
-    tr.querySelector(".dur").textContent = dur;
+    const input = timeCell.querySelector(".start-editor");
+    if(!input){
+      timeCell.textContent = originalText;
+      row.classList.remove("time-editing");
+      row.draggable = true;
+      return;
+    }
 
-    tbody.appendChild(tr);
-    activarFila(tr);
-    updateTimes();
-    saveState();
+    const commit = () => {
+      const minutes = parseStartTime(input.value.trim());
+      row.classList.remove("time-editing");
+      row.draggable = true;
+      if(minutes !== null){
+        row.dataset.manualStart = String(minutes);
+      }else{
+        delete row.dataset.manualStart;
+      }
+      normalizeSchedule("manual");
+      saveState();
+      requestPointerUpdate();
+    };
 
-    document.getElementById("newTask").value = "";
-    document.getElementById("newDuration").value = "";
-  });
+    input.addEventListener("blur", commit);
+    input.addEventListener("keydown", e => {
+      if(e.key === "Enter"){
+        e.preventDefault();
+        input.blur();
+      }
+      if(e.key === "Escape"){
+        e.preventDefault();
+        timeCell.textContent = originalText;
+        row.classList.remove("time-editing");
+        row.draggable = true;
+        normalizeSchedule("dom");
+      }
+    });
 
-  let timerInterval = null;
-  let timerSeconds = 15 * 60;
+    input.focus();
+    input.select?.();
+  }
 
-  function getTotalSecondsFromInputs(){
-    const h = Math.max(0, parseInt(document.getElementById("timerHours").value || "0", 10));
-    const m = Math.max(0, parseInt(document.getElementById("timerMinutes").value || "0", 10));
-    const s = Math.max(0, parseInt(document.getElementById("timerSeconds").value || "0", 10));
+  function clearManualStart(row){
+    if(row && row.dataset.manualStart){
+      delete row.dataset.manualStart;
+    }
+  }
 
-    return (h * 3600) + (m * 60) + s;
+  function placeDraggingRow(referenceRow, clientY){
+    if(!draggingRow || !referenceRow || draggingRow === referenceRow) return;
+    const rect = referenceRow.getBoundingClientRect();
+    const parent = referenceRow.parentElement;
+    if(!parent) return;
+    if(clientY < rect.top + rect.height / 2){
+      parent.insertBefore(draggingRow, referenceRow);
+    }else{
+      parent.insertBefore(draggingRow, referenceRow.nextSibling);
+    }
+  }
+
+  function prepareRow(row){
+    if(!row || row.dataset.rowReady === "true") return;
+    row.dataset.rowReady = "true";
+    row.draggable = true;
+    row.style.cursor = "move";
+
+    const taskText = row.querySelector(".task-text");
+    const durCell = row.querySelector(".dur");
+    const timeCell = row.querySelector(".time");
+    const cb = row.querySelector('input[type="checkbox"]');
+
+    if(taskText){
+      bindEditableCell(taskText, () => {
+        refreshScheduleNow();
+      });
+    }
+
+    if(durCell){
+      bindEditableCell(durCell, () => {
+        refreshScheduleNow();
+      });
+    }
+
+    if(cb && !cb.dataset.ready){
+      cb.dataset.ready = "true";
+      cb.addEventListener("change", () => {
+        row.classList.toggle("done", cb.checked);
+        saveState();
+      });
+    }
+
+    if(!row.dataset.dragReady){
+      row.dataset.dragReady = "true";
+      row.addEventListener("dragstart", e => {
+        if(row.classList.contains("time-editing")) return;
+        clearManualStart(row);
+        removeDropPlaceholders();
+        draggingRow = row;
+        row.classList.add("dragging");
+        if(e.dataTransfer){
+          e.dataTransfer.effectAllowed = "move";
+          try{ e.dataTransfer.setData("text/plain", row.dataset.id || ""); }catch(err){}
+        }
+      });
+      row.addEventListener("dragend", () => {
+        row.classList.remove("dragging");
+        draggingRow = null;
+        refreshScheduleNow();
+      });
+    }
+
+    if(!row.dataset.reorderReady){
+      row.dataset.reorderReady = "true";
+      row.addEventListener("dragover", e => {
+        e.preventDefault();
+        if(!draggingRow || draggingRow === row) return;
+        placeDraggingRow(row, e.clientY);
+      });
+      row.addEventListener("drop", e => {
+        e.preventDefault();
+        refreshScheduleNow();
+      });
+    }
+
+    applyEditModeToRow(row);
+  }
+
+function setupDragContainers(){
+    getBodies().forEach(tbody => {
+      if(tbody.dataset.dropReady) return;
+      tbody.dataset.dropReady = "true";
+
+      tbody.addEventListener("dragover", e => {
+        e.preventDefault();
+        if(!draggingRow) return;
+
+        const rows = [...tbody.querySelectorAll("tr:not(.dragging):not(.drop-placeholder)")];
+        const nextRow = rows.find(row => {
+          const box = row.getBoundingClientRect();
+          return e.clientY < box.top + box.height / 2;
+        });
+
+        const placeholder = tbody.querySelector(".drop-placeholder");
+        if(nextRow) tbody.insertBefore(draggingRow, nextRow);
+        else if(placeholder) tbody.insertBefore(draggingRow, placeholder);
+        else tbody.appendChild(draggingRow);
+      });
+
+      tbody.addEventListener("drop", e => {
+        e.preventDefault();
+        refreshScheduleNow();
+      });
+    });
+  }
+
+  function normalizeSchedule(mode = "dom"){
+    if(scheduleLock) return;
+    scheduleLock = true;
+    try{
+      removeDropPlaceholders();
+      const bodies = getBodies();
+      const boundaries = getBodyBoundaries();
+      if(!bodies.length || !boundaries.length) return;
+
+      getRows().forEach(prepareRow);
+
+      const buckets = boundaries.map(() => []);
+      const rows = getRows();
+
+      rows.forEach((row, index) => {
+        const domBodyIndex = bodies.findIndex(body => body.contains(row));
+        const manual = row.dataset.manualStart ? parseInt(row.dataset.manualStart, 10) : null;
+        const targetIndex = manual !== null ? findBodyIndexForStart(manual, boundaries) : Math.max(0, domBodyIndex);
+        buckets[targetIndex].push({ row, index, manual, domBodyIndex });
+      });
+
+      buckets.forEach((items, bodyIndex) => {
+        const tbody = boundaries[bodyIndex]?.tbody;
+        if(!tbody) return;
+
+        items.sort((a, b) => {
+          if(a.manual !== null && b.manual !== null) return a.manual - b.manual;
+          if(a.manual !== null) return -1;
+          if(b.manual !== null) return 1;
+          return a.index - b.index;
+        });
+
+        let cursor = boundaries[bodyIndex].start;
+
+        items.forEach(item => {
+          const row = item.row;
+          const durCell = row.querySelector(".dur");
+          const timeCell = row.querySelector(".time");
+          const durationMinutes = parseDurationToMinutes(durCell?.textContent || "");
+          const start = item.manual !== null ? Math.max(boundaries[bodyIndex].start, item.manual) : cursor;
+          const end = start + durationMinutes;
+
+          row.dataset.computedStart = String(start);
+          row.dataset.computedEnd = String(end);
+          row.dataset.blockIndex = String(bodyIndex);
+
+          if(!row.classList.contains("time-editing") && timeCell){
+            timeCell.textContent = formatRange(start, durationMinutes);
+          }
+
+          tbody.appendChild(row);
+          cursor = end;
+        });
+      });
+
+      ensureDropPlaceholders();
+      updateCurrentPointer(new Date());
+    }finally{
+      scheduleLock = false;
+    }
+  }
+
+  function addDeleteHandlers(){
+    document.addEventListener("click", e => {
+      if(e.target.classList.contains("delete-task")){
+        const row = e.target.closest("tr");
+        if(row){
+          row.remove();
+          normalizeSchedule("dom");
+          saveState();
+        }
+      }
+    });
+  }
+
+  function setupAddTask(){
+    const btn = document.getElementById("addTaskBtn");
+    if(!btn) return;
+    btn.addEventListener("click", () => {
+      const name = document.getElementById("newTask").value.trim();
+      const dur = document.getElementById("newDuration").value.trim() || "10 min";
+      const startValue = document.getElementById("newStart").value.trim();
+      if(!name) return;
+
+      const manualStart = parseStartTime(startValue);
+      const boundaries = getBodyBoundaries();
+      const bodies = getBodies();
+      let tbody = bodies[bodies.length - 1] || document.querySelector("tbody[data-start]");
+
+      if(manualStart !== null && boundaries.length){
+        tbody = boundaries[findBodyIndexForStart(manualStart, boundaries)]?.tbody || tbody;
+      }
+
+      const tr = document.createElement("tr");
+      tr.dataset.id = "manual_" + Date.now();
+      if(manualStart !== null) tr.dataset.manualStart = String(manualStart);
+
+      tr.innerHTML = `
+        <td><input type="checkbox"></td>
+        <td class="task"><span class="task-text"></span></td>
+        <td class="dur"></td>
+        <td class="time">Manual</td>
+        <td><span class="pill">nueva</span></td>
+        <td class="row-actions"><button class="btn delete-task" type="button">✕</button></td>
+      `;
+
+      tr.querySelector(".task-text").textContent = name;
+      tr.querySelector(".dur").textContent = dur;
+
+      tbody.appendChild(tr);
+      prepareRow(tr);
+      applyEditModeToRow(tr);
+      normalizeSchedule("dom");
+      saveState();
+
+      document.getElementById("newTask").value = "";
+      document.getElementById("newDuration").value = "";
+      document.getElementById("newStart").value = "";
+    });
+  }
+
+  function secondsToInputs(totalSeconds){
+    totalSeconds = Math.max(0, totalSeconds);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    document.getElementById("timerHours").value = hours;
+    document.getElementById("timerMinutes").value = minutes;
+    document.getElementById("timerSeconds").value = seconds;
   }
 
   function updateTimerDisplay(){
     const hours = Math.floor(timerSeconds / 3600);
     const minutes = Math.floor((timerSeconds % 3600) / 60);
     const seconds = timerSeconds % 60;
-
     document.getElementById("timerDisplay").textContent =
       String(hours).padStart(2, "0") + ":" +
       String(minutes).padStart(2, "0") + ":" +
       String(seconds).padStart(2, "0");
   }
 
-  function playAlarm(){
-    try{
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      const ctx = new AudioContext();
-
-      for(let i = 0; i < 4; i++){
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-
-        osc.type = "sine";
-        osc.frequency.value = i % 2 === 0 ? 880 : 660;
-        gain.gain.value = 0.08;
-
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-
-        osc.start(ctx.currentTime + i * 0.32);
-        osc.stop(ctx.currentTime + i * 0.32 + 0.22);
-      }
-    }catch(e){}
-
-    document.getElementById("timerStatus").textContent = "Terminado";
-    alert("⏰ Tiempo terminado");
-  }
-
   function setTimerFromInputs(){
-    timerSeconds = getTotalSecondsFromInputs();
-
+    const h = Math.max(0, parseInt(document.getElementById("timerHours").value || "0", 10));
+    const m = Math.max(0, parseInt(document.getElementById("timerMinutes").value || "0", 10));
+    const s = Math.max(0, parseInt(document.getElementById("timerSeconds").value || "0", 10));
+    timerSeconds = (h * 3600) + (m * 60) + s;
     if(timerSeconds <= 0){
       timerSeconds = 60;
       secondsToInputs(timerSeconds);
     }
-
     updateTimerDisplay();
   }
 
-  document.getElementById("startTimer").addEventListener("click", ()=>{
-    if(timerInterval) return;
-
-    setTimerFromInputs();
-    document.getElementById("timerStatus").textContent = "Corriendo";
-
-    timerInterval = setInterval(()=>{
-      timerSeconds--;
-      updateTimerDisplay();
-
-      if(timerSeconds <= 0){
-        clearInterval(timerInterval);
-        timerInterval = null;
-        playAlarm();
+  function playAlarm(){
+    try{
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      const ctx = new AudioContext();
+      for(let i = 0; i < 4; i++){
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = i % 2 === 0 ? 880 : 660;
+        gain.gain.value = 0.08;
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + i * 0.32);
+        osc.stop(ctx.currentTime + i * 0.32 + 0.22);
       }
-    }, 1000);
-  });
+    }catch(e){}
+    document.getElementById("timerStatus").textContent = "Terminado";
+    alert("⏰ Tiempo terminado");
+  }
 
-  document.getElementById("pauseTimer").addEventListener("click", ()=>{
-    clearInterval(timerInterval);
-    timerInterval = null;
-    secondsToInputs(timerSeconds);
-    document.getElementById("timerStatus").textContent = "Pausado";
-  });
+  function setupFloatingToggle(){
+    const btn = document.getElementById("floatingToggle");
+    if(!btn) return;
 
-  document.getElementById("resetTimer").addEventListener("click", ()=>{
-    clearInterval(timerInterval);
-    timerInterval = null;
-    setTimerFromInputs();
-    document.getElementById("timerStatus").textContent = "Reiniciado";
-  });
+    btn.textContent = "✎";
+    btn.title = "Activar edición";
+    btn.setAttribute("aria-pressed", "false");
+    btn.addEventListener("click", () => {
+      setEditMode(!editModeEnabled);
+    });
 
-  document.getElementById("clearTimer").addEventListener("click", ()=>{
-    clearInterval(timerInterval);
-    timerInterval = null;
-    timerSeconds = 0;
-    secondsToInputs(0);
-    updateTimerDisplay();
-    document.getElementById("timerStatus").textContent = "Limpio";
-  });
+    const refreshBtn = document.getElementById("refreshScheduleBtn");
+    if(refreshBtn){
+      refreshBtn.addEventListener("click", () => {
+        refreshScheduleNow();
+      });
+    }
 
-  document.getElementById("pickDuration").addEventListener("click", ()=>{
-    durationPickMode = !durationPickMode;
-    document.getElementById("pickDuration").classList.toggle("active-picker", durationPickMode);
-    document.body.classList.toggle("duration-pick-mode", durationPickMode);
-    document.getElementById("timerStatus").textContent = durationPickMode ? "Elige duración" : "Listo";
-  });
+    setEditMode(false);
+  }
 
-  ["timerHours", "timerMinutes", "timerSeconds"].forEach(id=>{
-    document.getElementById(id).addEventListener("change", ()=>{
-      if(!timerInterval){
-        setTimerFromInputs();
-        document.getElementById("timerStatus").textContent = "Listo";
+function cleanupLoadedDom(){
+    document.querySelectorAll(".edit-task").forEach(btn => btn.remove());
+    document.querySelectorAll("tbody[data-start] tr").forEach(row => {
+      row.querySelectorAll(".row-actions").forEach(actions => {
+        const deleteBtn = actions.querySelector(".delete-task");
+        actions.innerHTML = "";
+        if(deleteBtn) actions.appendChild(deleteBtn);
+        else actions.remove();
+      });
+    });
+  }
+
+  function resetRowReadyFlags(){
+    getRows().forEach(row => {
+      [
+        "rowReady",
+        "reorderReady",
+        "dragReady",
+        "timeReady",
+        "editReady",
+        "editBound"
+      ].forEach(key => delete row.dataset[key]);
+      row.classList.remove("time-editing", "dragging", "editing-inline");
+      row.removeAttribute("draggable");
+      const taskText = row.querySelector(".task-text");
+      const durCell = row.querySelector(".dur");
+      if(taskText){
+        taskText.removeAttribute("contenteditable");
+        taskText.removeAttribute("spellcheck");
+      }
+      if(durCell){
+        durCell.removeAttribute("contenteditable");
+        durCell.removeAttribute("spellcheck");
       }
     });
-  });
-function setupFloatingToggle(){
-  const btn = document.getElementById("floatingToggle");
-  if(!btn) return;
-
-  const saved = localStorage.getItem("floating_tools_hidden");
-
-  if(saved === "true"){
-    document.body.classList.add("float-hidden");
-    btn.textContent = "⏱";
   }
 
-  btn.addEventListener("click", ()=>{
-    const hidden = document.body.classList.toggle("float-hidden");
+  function init(){
+    setTodayDate();
+    updateRealClock();
+    setInterval(updateRealClock, 1000);
 
-    btn.textContent = hidden ? "⏱" : "×";
+    setupFloatingToggle();
 
-    localStorage.setItem("floating_tools_hidden", hidden ? "true" : "false");
-  });
-}
-setTodayDate();
-updateRealClock();
-setInterval(updateRealClock, 1000);
+    loadBlockTitles();
+    enableBlockTitleEditing();
+    loadColumnWidths();
+    setupColumnResizers();
 
-setupFloatingToggle();
+    const restored = loadState();
+    cleanupLoadedDom();
+    resetRowReadyFlags();
 
-enableBlockTitleEditing();
-loadBlockTitles();
+    getRows().forEach(prepareRow);
+    setupDragContainers();
+    addDeleteHandlers();
+    setupAddTask();
+    normalizeSchedule("dom");
+    ensureDropPlaceholders();
 
-getRows().forEach(activarFila);
-updateTimes();
-loadState();
-updateTimerDisplay();
+    if(restored){
+      getRows().forEach(row => {
+        const cb = row.querySelector('input[type="checkbox"]');
+        if(cb) row.classList.toggle("done", cb.checked);
+      });
+    }
+
+    updateTimerDisplay();
+
+    window.addEventListener("scroll", requestPointerUpdate, { passive: true });
+    window.addEventListener("resize", requestPointerUpdate);
+
+    document.getElementById("startTimer").addEventListener("click", () => {
+      if(timerInterval) return;
+      setTimerFromInputs();
+      document.getElementById("timerStatus").textContent = "Corriendo";
+      timerInterval = setInterval(() => {
+        timerSeconds--;
+        updateTimerDisplay();
+        if(timerSeconds <= 0){
+          clearInterval(timerInterval);
+          timerInterval = null;
+          playAlarm();
+        }
+      }, 1000);
+    });
+
+    document.getElementById("pauseTimer").addEventListener("click", () => {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      secondsToInputs(timerSeconds);
+      document.getElementById("timerStatus").textContent = "Pausado";
+    });
+
+    document.getElementById("resetTimer").addEventListener("click", () => {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      setTimerFromInputs();
+      document.getElementById("timerStatus").textContent = "Reiniciado";
+    });
+
+    document.getElementById("clearTimer").addEventListener("click", () => {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      timerSeconds = 0;
+      secondsToInputs(0);
+      updateTimerDisplay();
+      document.getElementById("timerStatus").textContent = "Limpio";
+    });
+
+    document.getElementById("pickDuration").addEventListener("click", () => {
+      durationPickMode = !durationPickMode;
+      document.getElementById("pickDuration").classList.toggle("active-picker", durationPickMode);
+      document.body.classList.toggle("duration-pick-mode", durationPickMode);
+      document.getElementById("timerStatus").textContent = durationPickMode ? "Elige duración" : "Listo";
+    });
+
+    ["timerHours", "timerMinutes", "timerSeconds"].forEach(id => {
+      document.getElementById(id).addEventListener("change", () => {
+        if(!timerInterval){
+          setTimerFromInputs();
+          document.getElementById("timerStatus").textContent = "Listo";
+        }
+      });
+    });
+
+    requestPointerUpdate();
+    saveState();
+  }
+
+  init();
 </script>
+
+
 </body>
 </html>
